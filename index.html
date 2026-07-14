@@ -684,18 +684,17 @@
     </script>
     <script>
     (function() {
-        var PASSWORD_HASH = '87bc5f7f4a5bdde977625605c031d9d93aec5140ad73826354eb230fe17bc1ad';
-
-        function sha256(str) {
-            var buffer = new TextEncoder().encode(str);
-            return crypto.subtle.digest('SHA-256', buffer).then(function(hash) {
-                var hexCodes = [];
-                for (var i = 0; i < hash.byteLength; i++) {
-                    hexCodes.push(hash[i].toString(16).padStart(2, '0'));
-                }
-                return hexCodes.join('');
-            });
+        // Simple reliable hash (djb2 + sdbm combined)
+        function simpleHash(str) {
+            var h1 = 5381, h2 = 0;
+            for (var i = 0; i < str.length; i++) {
+                h1 = ((h1 << 5) + h1 + str.charCodeAt(i)) >>> 0;
+                h2 = str.charCodeAt(i) + (h2 << 6) + (h2 << 16) - h2;
+                h2 = h2 >>> 0;
+            }
+            return h1.toString(16) + h2.toString(16);
         }
+        var PASSWORD_HASH = simpleHash('o2ohktv2026');
 
         // Hide all content immediately
         var mainStyles = document.getElementById('main-styles');
@@ -733,17 +732,16 @@
 
             function checkPassword() {
                 var pw = input.value;
-                sha256(pw).then(function(hash) {
-                    if (hash === PASSWORD_HASH) {
-                        sessionStorage.setItem('dashboard_auth', 'ok');
-                        overlay.remove();
-                        if (mainStyles) mainStyles.disabled = false;
-                    } else {
-                        error.style.display = 'block';
-                        input.value = '';
-                        input.focus();
-                    }
-                });
+                var hash = simpleHash(pw);
+                if (hash === PASSWORD_HASH) {
+                    sessionStorage.setItem('dashboard_auth', 'ok');
+                    overlay.remove();
+                    if (mainStyles) mainStyles.disabled = false;
+                } else {
+                    error.style.display = 'block';
+                    input.value = '';
+                    input.focus();
+                }
             }
 
             btn.addEventListener('click', checkPassword);
