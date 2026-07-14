@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lite App Daily Sales Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
+    <style id="main-styles">
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; padding: 20px; }
         .header { background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; }
@@ -681,6 +681,78 @@
             updateFilterLabel('channel');
             applyFilters();
         });
+    </script>
+    <script>
+    (function() {
+        var PASSWORD_HASH = '87bc5f7f4a5bdde977625605c031d9d93aec5140ad73826354eb230fe17bc1ad';
+
+        function sha256(str) {
+            var buffer = new TextEncoder().encode(str);
+            return crypto.subtle.digest('SHA-256', buffer).then(function(hash) {
+                var hexCodes = [];
+                for (var i = 0; i < hash.byteLength; i++) {
+                    hexCodes.push(hash[i].toString(16).padStart(2, '0'));
+                }
+                return hexCodes.join('');
+            });
+        }
+
+        // Hide all content immediately
+        var mainStyles = document.getElementById('main-styles');
+        if (mainStyles) mainStyles.disabled = true;
+        document.body.style.cssText = 'display:none';
+
+        // Check if already authenticated in this session
+        if (sessionStorage.getItem('dashboard_auth') === 'ok') {
+            if (mainStyles) mainStyles.disabled = false;
+            document.body.style.cssText = '';
+            return;
+        }
+
+        // Show password prompt
+        document.addEventListener('DOMContentLoaded', function() {
+            // Build login overlay
+            var overlay = document.createElement('div');
+            overlay.id = 'auth-overlay';
+            overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a237e,#3949ab);display:flex;align-items:center;justify-content:center;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;';
+            overlay.innerHTML = '' +
+                '<div style="background:white;border-radius:16px;padding:40px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,0.3);text-align:center;">' +
+                '<div style="font-size:32px;margin-bottom:16px;">🔐</div>' +
+                '<h2 style="color:#1a237e;font-size:20px;margin-bottom:8px;">HKTVmall Lite</h2>' +
+                '<p style="color:#64748b;font-size:13px;margin-bottom:24px;">Sales Dashboard — Authorized Access Only</p>' +
+                '<input type="password" id="auth-input" placeholder="Enter password" style="width:100%;padding:12px 16px;border:2px solid #e2e8f0;border-radius:8px;font-size:15px;outline:none;text-align:center;box-sizing:border-box;margin-bottom:16px;" />' +
+                '<button id="auth-btn" style="width:100%;padding:12px;background:#1a237e;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600;">Login</button>' +
+                '<p id="auth-error" style="color:#e53935;font-size:13px;margin-top:12px;display:none;">❌ Incorrect password. Try again.</p>' +
+                '</div>';
+            document.body.style.cssText = '';
+            document.body.appendChild(overlay);
+
+            var input = document.getElementById('auth-input');
+            var btn = document.getElementById('auth-btn');
+            var error = document.getElementById('auth-error');
+
+            function checkPassword() {
+                var pw = input.value;
+                sha256(pw).then(function(hash) {
+                    if (hash === PASSWORD_HASH) {
+                        sessionStorage.setItem('dashboard_auth', 'ok');
+                        overlay.remove();
+                        if (mainStyles) mainStyles.disabled = false;
+                    } else {
+                        error.style.display = 'block';
+                        input.value = '';
+                        input.focus();
+                    }
+                });
+            }
+
+            btn.addEventListener('click', checkPassword);
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') checkPassword();
+            });
+            input.focus();
+        });
+    })();
     </script>
 </body>
 </html>
