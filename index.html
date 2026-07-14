@@ -686,6 +686,9 @@
     (function() {
         var PASSWORD = 'o2ohktv2026';
 
+        // Allow headless Chrome / cron job bypass via ?auto=1
+        if (window.location.search.indexOf('auto=1') !== -1) return;
+
         // Hide all content immediately
         var mainStyles = document.getElementById('main-styles');
         if (mainStyles) mainStyles.disabled = true;
