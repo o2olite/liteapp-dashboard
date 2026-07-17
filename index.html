@@ -22,7 +22,7 @@
         .filter-dropdown { position: relative; }
         .filter-dropdown-trigger { padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; min-width: 150px; cursor: pointer; background: white; display: flex; justify-content: space-between; align-items: center; }
         .filter-dropdown-trigger:hover { border-color: #3949ab; }
-        .filter-checkbox { display: flex; align-items: center; gap: 4px; padding: 4px 6px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+        .filter-checkbox { display: flex; align-items: center; gap: 2px; padding: 2px 4px; border-radius: 3px; font-size: 12px; cursor: pointer; }
         .filter-checkbox:hover { background: #f1f5f9; }
         .filter-checkbox input { margin: 0; }
         .selected-count { font-size: 11px; color: #64748b; margin-left: 4px; }
@@ -85,7 +85,9 @@
             <div class="filter-group">
                 <label>Start Date</label>
                 <input type="date" id="startDate" value="2025-01-01" min="2025-01-01">
-                <small style="color: #64748b; font-size: 11px;">Default: 1/7/2026</small>
+                <div style="display: flex; gap: 4px; margin-top: 4px;">
+                    <button class="quick-date" onclick="setStartDate('yesterday')" style="font-size: 11px; padding: 2px 6px; border: 1px solid #e2e8f0; border-radius: 4px; background: white; cursor: pointer;">Yesterday</button>
+                </div>
             </div>
             <div class="filter-group">
                 <label>End Date</label>
@@ -426,6 +428,18 @@
             updateTable(filtered);
             updateCharts(filtered, effectiveChannels);
             updateKPIs(filtered, effectiveChannels, dateRangeText);
+        }
+
+        function setStartDate(preset) {
+            const now = new Date();
+            if (preset === 'yesterday') {
+                const yesterday = new Date(now);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const ymd = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+                document.getElementById('startDate').value = ymd;
+                document.getElementById('endDate').value = ymd;
+            }
+            applyFilters();
         }
 
         function resetFilters() {
