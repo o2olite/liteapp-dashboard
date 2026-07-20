@@ -176,25 +176,25 @@
         <div class="kpi-cards">
             <div class="kpi-card" style="border-top-color: #e91e63;">
                 <h3>GMV Target</h3>
-                <div class="value">$18,351,234</div>
+                <div class="value" id="kpiTargetGMV">$18,351,234</div>
             </div>
             <div class="kpi-card" style="border-top-color: #9c27b0;">
                 <h3>MTD GMV</h3>
-                <div class="value">$9,004,687</div>
-                <small style="font-size: 11px; color: #64748b;">1-1-2025 to 2026-07-19</small>
+                <div class="value" id="kpiMtdGMV">$0</div>
+                <small style="font-size: 11px; color: #64748b;" id="kpiMtdRange">Jul 1 - latest</small>
             </div>
             <div class="kpi-card" style="border-top-color: #00bcd4;">
                 <h3>Projected GMV</h3>
-                <div class="value">$17,446,580</div>
+                <div class="value" id="kpiProjectedGMV">$0</div>
                 <small style="font-size: 11px; color: #64748b;">Based on daily avg × 31 days</small>
             </div>
             <div class="kpi-card" style="border-top-color: #ff5722;">
                 <h3>Projected Achievement Rate</h3>
-                <div class="value" style="color: #f44336;">95.1%</div>
+                <div class="value" id="kpiProjectedPct" style="color: #f44336;">0%</div>
             </div>
             <div class="kpi-card" style="border-top-color: #f44336;">
                 <h3>Current Achievement % (MTD)</h3>
-                <div class="value" style="color: #f44336;">49.1%</div>
+                <div class="value" id="kpiMtdPct" style="color: #f44336;">0%</div>
                 <small style="font-size: 11px; color: #64748b;">MTD GMV / Full Month Target</small>
             </div>
         </div>
@@ -428,6 +428,62 @@
             updateTable(filtered);
             updateCharts(filtered, effectiveChannels);
             updateKPIs(filtered, effectiveChannels, dateRangeText);
+            updateAchievement();  // Update MTD achievement cards
+        }
+
+        function updateAchievement() {
+            // Calculate current month MTD from salesData
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth() + 1;  // 1-indexed
+            
+            // Filter to current month
+            const mtdData = salesData.filter(d => {
+                const [y, m] = d.date.split('-').map(Number);
+                return y === currentYear && m === currentMonth;
+            });
+            
+            if (mtdData.length === 0) return;
+            
+            // Calculate MTD GMV
+            const mtdGMV = mtdData.reduce((sum, d) => sum + d.total_gmv, 0);
+            const daysInMonth = mtdData.length;
+            const dailyAvg = mtdGMV / daysInMonth;
+            const projectedGMV = dailyAvg * 31;
+            
+            // Get target (hardcoded for now, could be configurable)
+            const target = 18351234;
+            
+            // Calculate percentages
+            const mtdPct = (mtdGMV / target) * 100;
+            const projPct = (projectedGMV / target) * 100;
+            
+            // Get date range
+            const dates = mtdData.map(d => d.date).sort();
+            const firstDate = dates[0];
+            const lastDate = dates[dates.length - 1];
+            const [, , lastDay] = lastDate.split('-');
+            
+            // Update DOM
+            document.getElementById('kpiMtdGMV').textContent = '$' + Math.round(mtdGMV).toLocaleString();
+            document.getElementById('kpiProjectedGMV').textContent = '$' + Math.round(projectedGMV).toLocaleString();
+            document.getElementById('kpiMtdPct').textContent = mtdPct.toFixed(1) + '%';
+            document.getElementById('kpiProjectedPct').textContent = projPct.toFixed(1) + '%';
+            document.getElementById('kpiMtdRange').textContent = `Jul 1 - Jul ${lastDay}`;
+            
+            // Color coding: >= 100% green, >= 90% orange, < 90% red
+            const projEl = document.getElementById('kpiProjectedPct');
+            const mtdEl = document.getElementById('kpiMtdPct');
+            [projEl, mtdEl].forEach(el => {
+                const pct = parseFloat(el.textContent);
+                if (pct >= 100) {
+                    el.style.color = '#4caf50';
+                } else if (pct >= 90) {
+                    el.style.color = '#ff9800';
+                } else {
+                    el.style.color = '#f44336';
+                }
+            });
         }
 
         function setStartDate(preset) {
