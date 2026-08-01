@@ -172,7 +172,7 @@
     </div>
 
     <div class="kpi-section">
-        <h2>🎯 Current Month - Achievement (July 2026)</h2>
+        <h2 id="achievementTitle">🎯 Current Month - Achievement (July 2026)</h2>
         <div class="kpi-cards">
             <div class="kpi-card" style="border-top-color: #e91e63;">
                 <h3>GMV Target</h3>
@@ -434,14 +434,28 @@
         function updateAchievement() {
             // Calculate current month MTD from salesData
             const now = new Date();
-            const currentYear = now.getFullYear();
-            const currentMonth = now.getMonth() + 1;  // 1-indexed
+            let currentYear = now.getFullYear();
+            let currentMonth = now.getMonth() + 1;  // 1-indexed
             
             // Filter to current month
-            const mtdData = salesData.filter(d => {
+            let mtdData = salesData.filter(d => {
                 const [y, m] = d.date.split('-').map(Number);
                 return y === currentYear && m === currentMonth;
             });
+            
+            // If current month has no data yet (e.g., 1st of new month),
+            // fall back to last month's finalized data
+            if (mtdData.length === 0) {
+                currentMonth -= 1;
+                if (currentMonth === 0) {
+                    currentMonth = 12;
+                    currentYear -= 1;
+                }
+                mtdData = salesData.filter(d => {
+                    const [y, m] = d.date.split('-').map(Number);
+                    return y === currentYear && m === currentMonth;
+                });
+            }
             
             if (mtdData.length === 0) return;
             
@@ -469,7 +483,9 @@
             document.getElementById('kpiProjectedGMV').textContent = '$' + Math.round(projectedGMV).toLocaleString();
             document.getElementById('kpiMtdPct').textContent = mtdPct.toFixed(1) + '%';
             document.getElementById('kpiProjectedPct').textContent = projPct.toFixed(1) + '%';
-            document.getElementById('kpiMtdRange').textContent = `Jul 1 - Jul ${lastDay}`;
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            document.getElementById('kpiMtdRange').textContent = `${monthNames[currentMonth-1]} 1 - ${monthNames[currentMonth-1]} ${lastDay}`;
+            document.getElementById('achievementTitle').textContent = `🎯 Current Month - Achievement (${monthNames[currentMonth-1]} ${currentYear})`;
             
             // Color coding: >= 100% green, >= 90% orange, < 90% red
             const projEl = document.getElementById('kpiProjectedPct');
