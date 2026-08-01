@@ -176,7 +176,7 @@
         <div class="kpi-cards">
             <div class="kpi-card" style="border-top-color: #e91e63;">
                 <h3>GMV Target</h3>
-                <div class="value" id="kpiTargetGMV">$19,572,847</div>
+                <div class="value" id="kpiTargetGMV">—</div>
             </div>
             <div class="kpi-card" style="border-top-color: #9c27b0;">
                 <h3>MTD GMV</h3>
@@ -465,8 +465,19 @@
             const dailyAvg = mtdGMV / daysInMonth;
             const projectedGMV = dailyAvg * 31;
             
-            // Get target (hardcoded for now, could be configurable)
-            const target = 19572847;
+            // Monthly targets — each month uses its own target for achievement
+            const monthlyTargets = {
+                '2026-05': 15000000,
+                '2026-06': 17000000,
+                '2026-07': 18351234,
+                '2026-08': 19572847,
+                '2026-09': 19572847,
+                '2026-10': 19572847,
+                '2026-11': 19572847,
+                '2026-12': 19572847
+            };
+            const dataKey = `${currentYear}-${String(currentMonth).padStart(2,'0')}`;
+            const target = monthlyTargets[dataKey] || 19572847;
             
             // Calculate percentages
             const mtdPct = (mtdGMV / target) * 100;
@@ -486,6 +497,7 @@
             const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
             document.getElementById('kpiMtdRange').textContent = `${monthNames[currentMonth-1]} 1 - ${monthNames[currentMonth-1]} ${lastDay}`;
             document.getElementById('achievementTitle').textContent = `🎯 Current Month - Achievement (${monthNames[currentMonth-1]} ${currentYear})`;
+            document.getElementById('kpiTargetGMV').textContent = '$' + target.toLocaleString();
             
             // Color coding: >= 100% green, >= 90% orange, < 90% red
             const projEl = document.getElementById('kpiProjectedPct');
