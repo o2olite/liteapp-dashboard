@@ -122,8 +122,8 @@
                         <label class="filter-checkbox"><input type="checkbox" value="4" onchange="updateFilterLabel('month')"> Apr</label>
                         <label class="filter-checkbox"><input type="checkbox" value="5" onchange="updateFilterLabel('month')"> May</label>
                         <label class="filter-checkbox"><input type="checkbox" value="6" onchange="updateFilterLabel('month')"> Jun</label>
-                        <label class="filter-checkbox"><input type="checkbox" value="7" checked onchange="updateFilterLabel('month')"> Jul</label>
-                        <label class="filter-checkbox"><input type="checkbox" value="8" onchange="updateFilterLabel('month')"> Aug</label>
+                        <label class="filter-checkbox"><input type="checkbox" value="7" onchange="updateFilterLabel('month')"> Jul</label>
+                        <label class="filter-checkbox"><input type="checkbox" value="8" checked onchange="updateFilterLabel('month')"> Aug</label>
                         <label class="filter-checkbox"><input type="checkbox" value="9" onchange="updateFilterLabel('month')"> Sep</label>
                         <label class="filter-checkbox"><input type="checkbox" value="10" onchange="updateFilterLabel('month')"> Oct</label>
                         <label class="filter-checkbox"><input type="checkbox" value="11" onchange="updateFilterLabel('month')"> Nov</label>
@@ -531,10 +531,13 @@
             const now = new Date();
             const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
             document.getElementById('startDate').value = firstOfMonth;
-            document.getElementById('endDate').value = '2026-08-02';
+            // Set end date to yesterday (or today if 1st of month)
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            document.getElementById('endDate').value = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
             // Default to current month only
-            setSelectedValues('yearMulti', ['2026']);
-            setSelectedValues('monthMulti', ['7']);
+            setSelectedValues('yearMulti', [String(now.getFullYear())]);
+            setSelectedValues('monthMulti', [String(now.getMonth() + 1)]);
             setSelectedValues('weekdayMulti', ['all']);
             setSelectedValues('channelMulti', ['online', 'pos']);
             // Update labels
@@ -764,6 +767,18 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Auto-select current month in the filter (so KPIs default to current month)
+            var now = new Date();
+            var currentMonth = now.getMonth() + 1;  // 1-indexed
+            var monthCheckboxes = document.querySelectorAll('#monthMulti input[type="checkbox"]');
+            monthCheckboxes.forEach(function(cb) {
+                if (cb.value !== 'all') {
+                    cb.checked = (parseInt(cb.value) === currentMonth);
+                } else {
+                    cb.checked = false;
+                }
+            });
+
             // Initialize filter labels
             updateFilterLabel('year');
             updateFilterLabel('month');
