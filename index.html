@@ -425,7 +425,7 @@
                 dateRangeText = `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}`;
             }
             
-            updateTable(salesData);  // Always show full data — table shows last 7 days regardless of filters
+            updateTable(processData(salesData));  // Always show last 7 days regardless of month filter
             updateCharts(filtered, effectiveChannels);
             updateKPIs(filtered, effectiveChannels, dateRangeText);
             updateAchievement();  // Update MTD achievement cards
