@@ -425,7 +425,7 @@
                 dateRangeText = `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}`;
             }
             
-            updateTable(filtered);
+            updateTable(salesData);  // Always show full data — table shows last 7 days regardless of filters
             updateCharts(filtered, effectiveChannels);
             updateKPIs(filtered, effectiveChannels, dateRangeText);
             updateAchievement();  // Update MTD achievement cards
@@ -600,7 +600,7 @@
             
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            sortedData.slice(0, 60).forEach(row => {
+            sortedData.slice(0, 7).forEach(row => {
                 // Format change percentages with color
                 let gmvChangeHtml = '-';
                 let ordersChangeHtml = '-';
