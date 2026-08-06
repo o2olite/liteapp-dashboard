@@ -101,13 +101,21 @@
         .cat-table .cat-highlight { color: #3949ab; }
         .cat-table .cat-total-row { background: #e8eaf6 !important; font-weight: 700; }
         .cat-table .cat-total-row td { border-top: 2px solid #3949ab; }
+        .cat-export-btn {
+            background: #1a237e; color: #ffffff; border: 1px solid #3949ab;
+            border-radius: 6px; padding: 4px 12px; font-size: 12px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .cat-export-btn:hover { background: #283593; }
+
+        .cat-scroll-hint { color: #64748b; font-size: 12px; text-align: right; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>📱 Lite App Daily Sales Dashboard</h1>
         <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-05</div>
-        <div class="update-time">Data as of: 2026-08-06 09:00</div>
+        <div class="update-time">Data as of: 2026-08-06 10:30</div>
     </div>
 
     <div class="data-source">
@@ -356,7 +364,10 @@
 
         <!-- GMV Table: 7-day detail with % -->
         <div class="cat-table-wrap">
-            <div class="scroll-hint">↔ Scroll horizontally to see all categories →</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <button class="cat-export-btn" onclick="exportCatCSV('gmv')">⬇ Export CSV</button>
+                <div class="cat-scroll-hint">↔ Scroll horizontally to see all categories →</div>
+            </div>
             <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Online GMV by Category — Past 7 Days (HKD with % of Daily Total)</h3>
             <table class="cat-table" id="gmvTable">
                 <thead><tr id="catGmvHead"></tr></thead>
@@ -366,7 +377,10 @@
 
         <!-- Customer Table: 7-day detail with % -->
         <div class="cat-table-wrap">
-            <div class="scroll-hint">↔ Scroll horizontally to see all categories →</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <button class="cat-export-btn" onclick="exportCatCSV('cust')">⬇ Export CSV</button>
+                <div class="cat-scroll-hint">↔ Scroll horizontally to see all categories →</div>
+            </div>
             <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Number of Customers by Category — Past 7 Days (Count with % of Daily Total)</h3>
             <table class="cat-table" id="custTable">
                 <thead><tr id="catCustHead"></tr></thead>
@@ -910,11 +924,54 @@
         });
     })();
 
+    // ===== CATEGORY CSV EXPORT =====
+    function exportCatCSV(type) {
+        const isGmv = type === 'gmv';
+        const measure = isGmv ? 'g' : 'c';
+        const prefix = isGmv ? 'GMV_HKD' : 'Customers';
+        const cats = CAT_DATA_EXPORT.cats;
+        const last7 = CAT_DATA_EXPORT.last7;
+        const td = CAT_DATA_EXPORT.tableData;
+        let csv = 'Date,Weekday,';
+        csv += cats.join(',');
+        csv += ',Daily Total\n';
+        for (const date of last7) {
+            const total = td[date]._t[measure];
+            let row = date.slice(5).replace('-', '/') + ',';
+            row += ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(date + 'T00:00:00').getDay()] + ',';
+            for (const cat of cats) {
+                const val = td[date][cat][measure];
+                const pct = val > 0 && total > 0 ? (val / total * 100).toFixed(1) + '%' : '';
+                row += val > 0 ? '"' + val.toLocaleString('en-US') + (pct ? ' (' + pct + ')' : '') + '",' : '"-",';
+            }
+            row += '"' + total.toLocaleString('en-US') + '"';
+            csv += row + '\n';
+        }
+        let grandTotal = 0;
+        for (const cat of cats) { for (const date of last7) grandTotal += td[date][cat][measure]; }
+        let sumRow = '"7-Day Total","",';
+        for (const cat of cats) {
+            let catSum = 0;
+            for (const date of last7) catSum += td[date][cat][measure];
+            if (catSum > 0) {
+                sumRow += '"' + catSum.toLocaleString('en-US') + ' (' + (catSum / grandTotal * 100).toFixed(1) + '%)",';
+            } else { sumRow += '"-",'; }
+        }
+        sumRow += '"' + grandTotal.toLocaleString('en-US') + '"';
+        csv += sumRow + '\n';
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'Daily_' + prefix + '_by_Category_7day.csv';
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
     // ===== CATEGORY ANALYSIS SECTION =====
     (function() {
         const CAT_DATA = {
             cats: ["超級市場","護理保健","護膚化妝","家品傢俬","女士服飾","男士服飾","母嬰育兒","童裝 嬰兒服飾","大腦場","家居電器","運動旅行","寵物用品","玩具圖書","内地直送"],
-            last7: ["2026-07-29","2026-07-30","2026-07-31","2026-08-01","2026-08-02","2026-08-03","2026-08-04"],
+            last7: ["2026-08-04","2026-08-03","2026-08-02","2026-08-01","2026-07-31","2026-07-30","2026-07-29"],
             last30: ["2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18","2026-07-19","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-25","2026-07-26","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-01","2026-08-02","2026-08-03","2026-08-04"],
             tableData: {
                 "2026-07-29": {"内地直送":{"g":31,"c":1},"大腦場":{"g":9136,"c":50},"女士服飾":{"g":1812,"c":10},"家品傢俬":{"g":45564,"c":313},"家居電器":{"g":105815,"c":144},"寵物用品":{"g":83142,"c":275},"母嬰育兒":{"g":10931,"c":57},"玩具圖書":{"g":3118,"c":28},"男士服飾":{"g":681,"c":5},"童裝 嬰兒服飾":{"g":658,"c":2},"護理保健":{"g":298309,"c":1136},"護膚化妝":{"g":32921,"c":180},"超級市場":{"g":859044,"c":5020},"運動旅行":{"g":8910,"c":71},"_t":{"g":1460073,"c":7292}},
@@ -959,6 +1016,8 @@
             }
         };
 
+        window.CAT_DATA_EXPORT = CAT_DATA;
+
         function fmtHKD(n) {
             if (n === 0 || !n) return null;
             return '$' + n.toLocaleString('en-US');
@@ -971,17 +1030,25 @@
             const parts = d.split('-');
             return parseInt(parts[2]) + '/' + parseInt(parts[1]);
         }
+        function fmtWeekday(d) {
+            const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const dt = new Date(d + 'T00:00:00');
+            return days[dt.getDay()];
+        }
 
         // Build GMV table
         const gmvHead = document.getElementById('catGmvHead');
         const gmvBody = document.getElementById('catGmvBody');
-        gmvHead.innerHTML = '<th>Date</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
+        gmvHead.innerHTML = '<th>Date</th><th>Weekday</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
 
         for (const date of CAT_DATA.last7) {
             const row = document.createElement('tr');
             const td0 = document.createElement('td');
             td0.textContent = fmtDate(date);
             row.appendChild(td0);
+            const tdW = document.createElement('td');
+            tdW.textContent = fmtWeekday(date);
+            row.appendChild(tdW);
             const total = CAT_DATA.tableData[date]._t.g;
             for (const cat of CAT_DATA.cats) {
                 const td = document.createElement('td');
@@ -1004,7 +1071,7 @@
         // GMV summary row
         const gmvSumRow = document.createElement('tr');
         gmvSumRow.className = 'cat-total-row';
-        gmvSumRow.innerHTML = '<td>7-Day Total</td>';
+        gmvSumRow.innerHTML = '<td>7-Day Total</td><td></td>';
         let gmvGrandTotal = 0;
         for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) gmvGrandTotal += CAT_DATA.tableData[date][cat].g; }
         for (const cat of CAT_DATA.cats) {
@@ -1022,13 +1089,16 @@
         // Build Customer table
         const custHead = document.getElementById('catCustHead');
         const custBody = document.getElementById('catCustBody');
-        custHead.innerHTML = '<th>Date</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
+        custHead.innerHTML = '<th>Date</th><th>Weekday</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
 
         for (const date of CAT_DATA.last7) {
             const row = document.createElement('tr');
             const td0 = document.createElement('td');
             td0.textContent = fmtDate(date);
             row.appendChild(td0);
+            const tdW = document.createElement('td');
+            tdW.textContent = fmtWeekday(date);
+            row.appendChild(tdW);
             const total = CAT_DATA.tableData[date]._t.c;
             for (const cat of CAT_DATA.cats) {
                 const td = document.createElement('td');
@@ -1050,7 +1120,7 @@
         // Customer summary row
         const custSumRow = document.createElement('tr');
         custSumRow.className = 'cat-total-row';
-        custSumRow.innerHTML = '<td>7-Day Total</td>';
+        custSumRow.innerHTML = '<td>7-Day Total</td><td></td>';
         let custGrandTotal = 0;
         for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) custGrandTotal += CAT_DATA.tableData[date][cat].c; }
         for (const cat of CAT_DATA.cats) {
