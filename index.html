@@ -115,7 +115,7 @@
     <div class="header">
         <h1>📱 Lite App Daily Sales Dashboard</h1>
         <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-05</div>
-        <div class="update-time">Data as of: 2026-08-06 13:31</div>
+        <div class="update-time">Data as of: 2026-08-06 14:30</div>
     </div>
 
     <div class="data-source">
@@ -356,7 +356,7 @@
 
         <!-- Chart: 30-day trend -->
         <div class="cat-chart-card">
-            <h3>Daily Online GMV by Category — Past 30 Days</h3>
+            <h3>Daily Online GMV by Category — Past <span id="chartDayCount">30</span> Days</h3>
             <div class="cat-chart-wrap">
                 <canvas id="categoryChart"></canvas>
             </div>
@@ -368,7 +368,7 @@
                 <button class="cat-export-btn" onclick="exportCatCSV('gmv')">⬇ Export CSV</button>
                 <div class="cat-scroll-hint">↔ Scroll horizontally to see all categories →</div>
             </div>
-            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Online GMV by Category — Past 7 Days (HKD with % of Daily Total)</h3>
+            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Online GMV by Category — Past <span id="gmvDayCount">7</span> Days (HKD with % of Daily Total)</h3>
             <table class="cat-table" id="gmvTable">
                 <thead><tr id="catGmvHead"></tr></thead>
                 <tbody id="catGmvBody"></tbody>
@@ -381,7 +381,7 @@
                 <button class="cat-export-btn" onclick="exportCatCSV('cust')">⬇ Export CSV</button>
                 <div class="cat-scroll-hint">↔ Scroll horizontally to see all categories →</div>
             </div>
-            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Number of Customers by Category — Past 7 Days (Count with % of Daily Total)</h3>
+            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Number of Customers by Category — Past <span id="custDayCount">7</span> Days (Count with % of Daily Total)</h3>
             <table class="cat-table" id="custTable">
                 <thead><tr id="catCustHead"></tr></thead>
                 <tbody id="catCustBody"></tbody>
@@ -942,10 +942,10 @@
             row += ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(date + 'T00:00:00').getDay()] + ',';
             for (const cat of cats) {
                 const val = td[date][cat][measure];
-                const pct = val > 0 && total > 0 ? (val / total * 100).toFixed(1) : '';
-                row += (val > 0 ? val : '') + ',' + pct + ',';
+                const pct = val > 0 && total > 0 ? (val / total * 100).toFixed(1) + '%' : '';
+                row += (val > 0 ? Math.round(val).toLocaleString('en-US') : '') + ',' + pct + ',';
             }
-            row += total;
+            row += Math.round(total).toLocaleString('en-US');
             csv += row + '\n';
         }
         let grandTotal = 0;
@@ -954,10 +954,10 @@
         for (const cat of cats) {
             let catSum = 0;
             for (const date of last7) catSum += td[date][cat][measure];
-            const pct = catSum > 0 ? (catSum / grandTotal * 100).toFixed(1) : '';
-            sumRow += catSum + ',' + pct + ',';
+            const pct = catSum > 0 ? (catSum / grandTotal * 100).toFixed(1) + '%' : '';
+            sumRow += Math.round(catSum).toLocaleString('en-US') + ',' + pct + ',';
         }
-        sumRow += grandTotal;
+        sumRow += Math.round(grandTotal).toLocaleString('en-US');
         csv += sumRow + '\n';
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
@@ -968,8 +968,8 @@
     }
 
     // ===== CATEGORY ANALYSIS SECTION =====
-    (function() {
-        const CAT_DATA = {
+    function renderCategorySection(dateList) {
+        const CAT_DATA_RAW = {
             cats: ["超級市場","護理保健","護膚化妝","家品傢俬","女士服飾","男士服飾","母嬰育兒","童裝 嬰兒服飾","大腦場","家居電器","運動旅行","寵物用品","玩具圖書","内地直送"],
             last7: ["2026-08-04","2026-08-03","2026-08-02","2026-08-01","2026-07-31","2026-07-30","2026-07-29"],
             last30: ["2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18","2026-07-19","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-25","2026-07-26","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-01","2026-08-02","2026-08-03","2026-08-04"],
@@ -1014,6 +1014,17 @@
                 "2026-08-03":{"内地直送":0,"大腦場":3081,"女士服飾":136,"家品傢俬":3211,"家居電器":17162,"寵物用品":5785,"母嬰育兒":1169,"玩具圖書":601,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":24426,"護膚化妝":2941,"超級市場":207737,"運動旅行":330},
                 "2026-08-04":{"内地直送":0,"大腦場":0,"女士服飾":0,"家品傢俬":280,"家居電器":0,"寵物用品":0,"母嬰育兒":0,"玩具圖書":0,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":124,"護膚化妝":267,"超級市場":708,"運動旅行":0}
             }
+        };
+
+        // Build dynamic CAT_DATA based on date filter
+        const allDates = Object.keys(CAT_DATA_RAW.tableData).sort();
+        const filteredDates = dateList.filter(d => CAT_DATA_RAW.tableData[d]);
+        const last7 = (filteredDates.length > 0 ? filteredDates : allDates).slice(-7).reverse();
+        const last30 = (filteredDates.length > 0 ? filteredDates : allDates).slice(-30);
+        const CAT_DATA = {
+            ...CAT_DATA_RAW,
+            last7: last7,
+            last30: last30
         };
 
         window.CAT_DATA_EXPORT = CAT_DATA;
@@ -1071,7 +1082,7 @@
         // GMV summary row
         const gmvSumRow = document.createElement('tr');
         gmvSumRow.className = 'cat-total-row';
-        gmvSumRow.innerHTML = '<td>7-Day Total</td><td></td>';
+        gmvSumRow.innerHTML = '<td>Total</td><td></td>';
         let gmvGrandTotal = 0;
         for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) gmvGrandTotal += CAT_DATA.tableData[date][cat].g; }
         for (const cat of CAT_DATA.cats) {
@@ -1120,7 +1131,7 @@
         // Customer summary row
         const custSumRow = document.createElement('tr');
         custSumRow.className = 'cat-total-row';
-        custSumRow.innerHTML = '<td>7-Day Total</td><td></td>';
+        custSumRow.innerHTML = '<td>Total</td><td></td>';
         let custGrandTotal = 0;
         for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) custGrandTotal += CAT_DATA.tableData[date][cat].c; }
         for (const cat of CAT_DATA.cats) {
@@ -1133,6 +1144,14 @@
         }
         custSumRow.innerHTML += '<td><div class="cat-amount cat-highlight">' + custGrandTotal.toLocaleString('en-US') + '</div></td>';
         custBody.appendChild(custSumRow);
+
+        // Update day count in table titles
+        const dcEl = document.getElementById('gmvDayCount');
+        if (dcEl) dcEl.textContent = CAT_DATA.last7.length;
+        const dcEl2 = document.getElementById('custDayCount');
+        if (dcEl2) dcEl2.textContent = CAT_DATA.last7.length;
+        const dcEl3 = document.getElementById('chartDayCount');
+        if (dcEl3) dcEl3.textContent = CAT_DATA.last30.length;
 
         // Build chart
         const catColors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8AC24A','#E6194B','#3CB371','#FF69B4','#20B2AA','#DAA520','#FF4444','#6495ED'];
@@ -1147,7 +1166,10 @@
         }));
         const chartLabels = CAT_DATA.last30.map(d => fmtDate(d));
 
-        new Chart(chartCtx, {
+        // Destroy previous chart if exists
+        if (window._catChart) window._catChart.destroy();
+
+        window._catChart = new Chart(chartCtx, {
             type: 'bar',
             data: { labels: chartLabels, datasets: chartDatasets },
             options: {
@@ -1164,7 +1186,10 @@
                 interaction: { mode: 'index', intersect: false }
             }
         });
-    })();
+    }
+
+    // Initial render with default dates (all available)
+    renderCategorySection([]);
     </script>
 </body>
 </html>
