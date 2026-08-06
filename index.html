@@ -115,7 +115,7 @@
     <div class="header">
         <h1>📱 Lite App Daily Sales Dashboard</h1>
         <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-05</div>
-        <div class="update-time">Data as of: 2026-08-06 11:32</div>
+        <div class="update-time">Data as of: 2026-08-06 12:30</div>
     </div>
 
     <div class="data-source">
@@ -932,32 +932,32 @@
         const cats = CAT_DATA_EXPORT.cats;
         const last7 = CAT_DATA_EXPORT.last7;
         const td = CAT_DATA_EXPORT.tableData;
+        // Header: each category gets its own value + % column
         let csv = 'Date,Weekday,';
-        csv += cats.join(',');
-        csv += ',Daily Total\n';
+        for (const cat of cats) csv += cat + ',' + cat + ' %,';
+        csv += 'Daily Total\n';
         for (const date of last7) {
             const total = td[date]._t[measure];
-            let row = date.slice(5).replace('-', '/') + ',';
+            let row = date + ',';
             row += ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(date + 'T00:00:00').getDay()] + ',';
             for (const cat of cats) {
                 const val = td[date][cat][measure];
-                const pct = val > 0 && total > 0 ? (val / total * 100).toFixed(1) + '%' : '';
-                row += val > 0 ? '"' + val.toLocaleString('en-US') + (pct ? ' (' + pct + ')' : '') + '",' : '"-",';
+                const pct = val > 0 && total > 0 ? (val / total * 100).toFixed(1) : '';
+                row += (val > 0 ? val : '') + ',' + pct + ',';
             }
-            row += '"' + total.toLocaleString('en-US') + '"';
+            row += total;
             csv += row + '\n';
         }
         let grandTotal = 0;
         for (const cat of cats) { for (const date of last7) grandTotal += td[date][cat][measure]; }
-        let sumRow = '"7-Day Total","",';
+        let sumRow = '7-Day Total,,';
         for (const cat of cats) {
             let catSum = 0;
             for (const date of last7) catSum += td[date][cat][measure];
-            if (catSum > 0) {
-                sumRow += '"' + catSum.toLocaleString('en-US') + ' (' + (catSum / grandTotal * 100).toFixed(1) + '%)",';
-            } else { sumRow += '"-",'; }
+            const pct = catSum > 0 ? (catSum / grandTotal * 100).toFixed(1) : '';
+            sumRow += catSum + ',' + pct + ',';
         }
-        sumRow += '"' + grandTotal.toLocaleString('en-US') + '"';
+        sumRow += grandTotal;
         csv += sumRow + '\n';
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
