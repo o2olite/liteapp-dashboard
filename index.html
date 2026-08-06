@@ -115,7 +115,7 @@
     <div class="header">
         <h1>📱 Lite App Daily Sales Dashboard</h1>
         <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-05</div>
-        <div class="update-time">Data as of: 2026-08-06 14:30</div>
+        <div class="update-time">Data as of: 2026-08-06 15:30</div>
     </div>
 
     <div class="data-source">
@@ -510,7 +510,11 @@
             updateTable(processData(salesData));  // Always show last 7 days regardless of month filter
             updateCharts(filtered, effectiveChannels);
             updateKPIs(filtered, effectiveChannels, dateRangeText);
-            updateAchievement();  // Update MTD achievement cards
+            updateAchievement();  // Update MTD achievement
+
+            // Re-render category section with filtered dates
+            const catDates = filtered.map(d => d.date).sort();
+            renderCategorySection(catDates);
         }
 
         function updateAchievement() {
