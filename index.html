@@ -66,13 +66,48 @@
         .change-negative { color: #f44336; }
         .data-source { background: #e3f2fd; color: #1565c0; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 13px; }
         .numeric { text-align: right; font-family: 'SF Mono', Monaco, monospace; }
+
+        /* ===== Category Analysis Section ===== */
+        .cat-section { margin-top: 24px; }
+        .cat-section-title {
+            font-size: 16px; color: #1e293b; margin-bottom: 16px; padding-left: 8px;
+            border-left: 4px solid #3949ab;
+        }
+        .cat-chart-card {
+            background: white; padding: 20px; border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 24px;
+        }
+        .cat-chart-card h3 { font-size: 16px; color: #1e293b; margin-bottom: 16px; }
+        .cat-chart-wrap { height: 450px; position: relative; }
+        .cat-table-wrap { overflow-x: auto; margin-bottom: 24px; }
+        .cat-table-wrap .scroll-hint {
+            font-size: 12px; color: #64748b; text-align: right; margin-bottom: 6px;
+        }
+        .cat-table { width: 100%; min-width: 1200px; border-collapse: collapse; font-size: 13px; }
+        .cat-table th {
+            background: #1a237e; color: white; padding: 10px 8px; text-align: center;
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px;
+            border-bottom: 2px solid #3949ab; white-space: nowrap;
+        }
+        .cat-table th:first-child { text-align: left; padding-left: 16px; min-width: 110px; }
+        .cat-table td { padding: 8px 8px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+        .cat-table td:first-child { text-align: left; padding-left: 16px; font-weight: 600; color: #334155; }
+        .cat-table tbody tr:nth-child(odd) { background-color: #f8fafc; }
+        .cat-table tbody tr:nth-child(even) { background-color: #f1f5f9; }
+        .cat-table tbody tr:hover { background-color: #e2e8f0; }
+        .cat-table .cat-amount { color: #1e293b; font-weight: 600; font-family: 'SF Mono', Monaco, monospace; }
+        .cat-table .cat-pct { color: #64748b; font-size: 11px; margin-top: 1px; }
+        .cat-table .cat-dash { color: #cbd5e1; }
+        .cat-table .cat-highlight { color: #3949ab; }
+        .cat-table .cat-total-row { background: #e8eaf6 !important; font-weight: 700; }
+        .cat-table .cat-total-row td { border-top: 2px solid #3949ab; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>📱 Lite App Daily Sales Dashboard</h1>
-        <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-04</div>
-        <div class="update-time">Data as of: 2026-08-05 15:30</div>
+        <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-05</div>
+        <div class="update-time">Data as of: 2026-08-06 09:00</div>
     </div>
 
     <div class="data-source">
@@ -91,7 +126,7 @@
             </div>
             <div class="filter-group">
                 <label>End Date</label>
-                <input type="date" id="endDate" value="2026-08-04">
+                <input type="date" id="endDate" value="2026-08-05">
             </div>
             <div class="filter-group">
                 <label>Year</label>
@@ -305,6 +340,39 @@
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
+    </div>
+
+    <!-- ===== Category Analysis Section ===== -->
+    <div class="cat-section">
+        <h2 class="cat-section-title">📊 Daily Online GMV &amp; Customers by Category</h2>
+
+        <!-- Chart: 30-day trend -->
+        <div class="cat-chart-card">
+            <h3>Daily Online GMV by Category — Past 30 Days</h3>
+            <div class="cat-chart-wrap">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+
+        <!-- GMV Table: 7-day detail with % -->
+        <div class="cat-table-wrap">
+            <div class="scroll-hint">↔ Scroll horizontally to see all categories →</div>
+            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Online GMV by Category — Past 7 Days (HKD with % of Daily Total)</h3>
+            <table class="cat-table" id="gmvTable">
+                <thead><tr id="catGmvHead"></tr></thead>
+                <tbody id="catGmvBody"></tbody>
+            </table>
+        </div>
+
+        <!-- Customer Table: 7-day detail with % -->
+        <div class="cat-table-wrap">
+            <div class="scroll-hint">↔ Scroll horizontally to see all categories →</div>
+            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Number of Customers by Category — Past 7 Days (Count with % of Daily Total)</h3>
+            <table class="cat-table" id="custTable">
+                <thead><tr id="catCustHead"></tr></thead>
+                <tbody id="catCustBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
@@ -839,6 +907,192 @@
                 if (e.key === 'Enter' || e.keyCode === 13) checkPassword();
             };
             setTimeout(function() { input.focus(); }, 100);
+        });
+    })();
+
+    // ===== CATEGORY ANALYSIS SECTION =====
+    (function() {
+        const CAT_DATA = {
+            cats: ["超級市場","護理保健","護膚化妝","家品傢俬","女士服飾","男士服飾","母嬰育兒","童裝 嬰兒服飾","大腦場","家居電器","運動旅行","寵物用品","玩具圖書","内地直送"],
+            last7: ["2026-07-29","2026-07-30","2026-07-31","2026-08-01","2026-08-02","2026-08-03","2026-08-04"],
+            last30: ["2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-11","2026-07-12","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-18","2026-07-19","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-25","2026-07-26","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-01","2026-08-02","2026-08-03","2026-08-04"],
+            tableData: {
+                "2026-07-29": {"内地直送":{"g":31,"c":1},"大腦場":{"g":9136,"c":50},"女士服飾":{"g":1812,"c":10},"家品傢俬":{"g":45564,"c":313},"家居電器":{"g":105815,"c":144},"寵物用品":{"g":83142,"c":275},"母嬰育兒":{"g":10931,"c":57},"玩具圖書":{"g":3118,"c":28},"男士服飾":{"g":681,"c":5},"童裝 嬰兒服飾":{"g":658,"c":2},"護理保健":{"g":298309,"c":1136},"護膚化妝":{"g":32921,"c":180},"超級市場":{"g":859044,"c":5020},"運動旅行":{"g":8910,"c":71},"_t":{"g":1460073,"c":7292}},
+                "2026-07-30": {"内地直送":{"g":0,"c":0},"大腦場":{"g":1442,"c":10},"女士服飾":{"g":1032,"c":5},"家品傢俬":{"g":4907,"c":46},"家居電器":{"g":15716,"c":39},"寵物用品":{"g":9991,"c":42},"母嬰育兒":{"g":1272,"c":7},"玩具圖書":{"g":461,"c":4},"男士服飾":{"g":274,"c":2},"童裝 嬰兒服飾":{"g":0,"c":0},"護理保健":{"g":52927,"c":216},"護膚化妝":{"g":8295,"c":32},"超級市場":{"g":240964,"c":2432},"運動旅行":{"g":2587,"c":14},"_t":{"g":347869,"c":2849}},
+                "2026-07-31": {"内地直送":{"g":0,"c":0},"大腦場":{"g":1140,"c":7},"女士服飾":{"g":47,"c":2},"家品傢俬":{"g":4657,"c":48},"家居電器":{"g":6048,"c":19},"寵物用品":{"g":7809,"c":24},"母嬰育兒":{"g":1430,"c":7},"玩具圖書":{"g":865,"c":6},"男士服飾":{"g":0,"c":0},"童裝 嬰兒服飾":{"g":0,"c":0},"護理保健":{"g":35110,"c":178},"護膚化妝":{"g":4094,"c":31},"超級市場":{"g":249107,"c":2449},"運動旅行":{"g":285,"c":6},"_t":{"g":310593,"c":2777}},
+                "2026-08-01": {"内地直送":{"g":0,"c":0},"大腦場":{"g":8113,"c":11},"女士服飾":{"g":2155,"c":2},"家品傢俬":{"g":8466,"c":122},"家居電器":{"g":15664,"c":34},"寵物用品":{"g":38385,"c":84},"母嬰育兒":{"g":9401,"c":22},"玩具圖書":{"g":410,"c":7},"男士服飾":{"g":139,"c":1},"童裝 嬰兒服飾":{"g":0,"c":0},"護理保健":{"g":140223,"c":387},"護膚化妝":{"g":19613,"c":79},"超級市場":{"g":560201,"c":3859},"運動旅行":{"g":3574,"c":22},"_t":{"g":806344,"c":4630}},
+                "2026-08-02": {"内地直送":{"g":0,"c":0},"大腦場":{"g":17036,"c":11},"女士服飾":{"g":1232,"c":5},"家品傢俬":{"g":10179,"c":124},"家居電器":{"g":9898,"c":35},"寵物用品":{"g":37895,"c":95},"母嬰育兒":{"g":3095,"c":16},"玩具圖書":{"g":927,"c":10},"男士服飾":{"g":49,"c":1},"童裝 嬰兒服飾":{"g":0,"c":0},"護理保健":{"g":168030,"c":471},"護膚化妝":{"g":22269,"c":89},"超級市場":{"g":499456,"c":3489},"運動旅行":{"g":1558,"c":15},"_t":{"g":771983,"c":4361}},
+                "2026-08-03": {"内地直送":{"g":0,"c":0},"大腦場":{"g":3081,"c":10},"女士服飾":{"g":136,"c":2},"家品傢俬":{"g":3211,"c":66},"家居電器":{"g":17162,"c":22},"寵物用品":{"g":5785,"c":16},"母嬰育兒":{"g":1169,"c":8},"玩具圖書":{"g":601,"c":6},"男士服飾":{"g":0,"c":0},"童裝 嬰兒服飾":{"g":0,"c":0},"護理保健":{"g":24426,"c":112},"護膚化妝":{"g":2941,"c":15},"超級市場":{"g":207737,"c":2321},"運動旅行":{"g":330,"c":4},"_t":{"g":266577,"c":2582}},
+                "2026-08-04": {"内地直送":{"g":0,"c":0},"大腦場":{"g":0,"c":0},"女士服飾":{"g":0,"c":0},"家品傢俬":{"g":280,"c":1},"家居電器":{"g":0,"c":0},"寵物用品":{"g":0,"c":0},"母嬰育兒":{"g":0,"c":0},"玩具圖書":{"g":0,"c":0},"男士服飾":{"g":0,"c":0},"童裝 嬰兒服飾":{"g":0,"c":0},"護理保健":{"g":124,"c":1},"護膚化妝":{"g":267,"c":2},"超級市場":{"g":708,"c":5},"運動旅行":{"g":0,"c":0},"_t":{"g":1379,"c":9}}
+            },
+            chartData: {
+                "2026-07-06":{"内地直送":0,"大腦場":912,"女士服飾":0,"家品傢俬":1416,"家居電器":10533,"寵物用品":4258,"母嬰育兒":216,"玩具圖書":58,"男士服飾":39,"童裝 嬰兒服飾":0,"護理保健":22933,"護膚化妝":2521,"超級市場":179592,"運動旅行":835},
+                "2026-07-07":{"内地直送":0,"大腦場":1165,"女士服飾":28,"家品傢俬":1621,"家居電器":6947,"寵物用品":5107,"母嬰育兒":123,"玩具圖書":30,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":17998,"護膚化妝":1113,"超級市場":200270,"運動旅行":331},
+                "2026-07-08":{"内地直送":70,"大腦場":17955,"女士服飾":769,"家品傢俬":27642,"家居電器":93847,"寵物用品":88526,"母嬰育兒":8793,"玩具圖書":4472,"男士服飾":520,"童裝 嬰兒服飾":199,"護理保健":303833,"護膚化妝":37061,"超級市場":628980,"運動旅行":9402},
+                "2026-07-09":{"内地直送":0,"大腦場":803,"女士服飾":0,"家品傢俬":2882,"家居電器":5952,"寵物用品":5384,"母嬰育兒":366,"玩具圖書":1057,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":28657,"護膚化妝":2459,"超級市場":199246,"運動旅行":813},
+                "2026-07-10":{"内地直送":0,"大腦場":1487,"女士服飾":40,"家品傢俬":3674,"家居電器":8808,"寵物用品":6301,"母嬰育兒":3330,"玩具圖書":0,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":38418,"護膚化妝":1069,"超級市場":222163,"運動旅行":336},
+                "2026-07-11":{"内地直送":0,"大腦場":3431,"女士服飾":622,"家品傢俬":9238,"家居電器":18006,"寵物用品":39249,"母嬰育兒":4777,"玩具圖書":1062,"男士服飾":20,"童裝 嬰兒服飾":0,"護理保健":175401,"護膚化妝":20974,"超級市場":547456,"運動旅行":1336},
+                "2026-07-12":{"内地直送":0,"大腦場":1302,"女士服飾":174,"家品傢俬":6445,"家居電器":24543,"寵物用品":45290,"母嬰育兒":6239,"玩具圖書":679,"男士服飾":282,"童裝 嬰兒服飾":0,"護理保健":158567,"護膚化妝":24770,"超級市場":464995,"運動旅行":1074},
+                "2026-07-13":{"内地直送":0,"大腦場":4359,"女士服飾":249,"家品傢俬":1583,"家居電器":22199,"寵物用品":3963,"母嬰育兒":526,"玩具圖書":187,"男士服飾":116,"童裝 嬰兒服飾":0,"護理保健":25507,"護膚化妝":2398,"超級市場":202908,"運動旅行":718},
+                "2026-07-14":{"内地直送":116,"大腦場":3042,"女士服飾":0,"家品傢俬":1706,"家居電器":8805,"寵物用品":6241,"母嬰育兒":211,"玩具圖書":463,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":40452,"護膚化妝":7557,"超級市場":234388,"運動旅行":497},
+                "2026-07-15":{"内地直送":0,"大腦場":9816,"女士服飾":1562,"家品傢俬":31176,"家居電器":106128,"寵物用品":81869,"母嬰育兒":9078,"玩具圖書":2805,"男士服飾":565,"童裝 嬰兒服飾":117,"護理保健":239763,"護膚化妝":37658,"超級市場":589193,"運動旅行":7790},
+                "2026-07-16":{"内地直送":0,"大腦場":3641,"女士服飾":0,"家品傢俬":6712,"家居電器":27410,"寵物用品":11884,"母嬰育兒":1400,"玩具圖書":60,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":48194,"護膚化妝":7107,"超級市場":269434,"運動旅行":1520},
+                "2026-07-17":{"内地直送":0,"大腦場":16129,"女士服飾":0,"家品傢俬":3953,"家居電器":10029,"寵物用品":3409,"母嬰育兒":523,"玩具圖書":251,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":29544,"護膚化妝":2620,"超級市場":294159,"運動旅行":367},
+                "2026-07-18":{"内地直送":0,"大腦場":1599,"女士服飾":0,"家品傢俬":8139,"家居電器":16288,"寵物用品":42811,"母嬰育兒":7072,"玩具圖書":1458,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":174361,"護膚化妝":19161,"超級市場":581004,"運動旅行":1157},
+                "2026-07-19":{"内地直送":0,"大腦場":5730,"女士服飾":73,"家品傢俬":7135,"家居電器":20483,"寵物用品":46180,"母嬰育兒":5079,"玩具圖書":165,"男士服飾":58,"童裝 嬰兒服飾":0,"護理保健":189500,"護膚化妝":30918,"超級市場":536653,"運動旅行":1863},
+                "2026-07-20":{"内地直送":0,"大腦場":5403,"女士服飾":0,"家品傢俬":3438,"家居電器":28852,"寵物用品":7184,"母嬰育兒":1364,"玩具圖書":345,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":27794,"護膚化妝":1989,"超級市場":213753,"運動旅行":1350},
+                "2026-07-21":{"内地直送":0,"大腦場":721,"女士服飾":0,"家品傢俬":1616,"家居電器":2631,"寵物用品":2172,"母嬰育兒":743,"玩具圖書":639,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":34369,"護膚化妝":6573,"超級市場":267897,"運動旅行":78},
+                "2026-07-22":{"内地直送":80,"大腦場":20126,"女士服飾":2201,"家品傢俬":45555,"家居電器":113874,"寵物用品":77986,"母嬰育兒":9750,"玩具圖書":2305,"男士服飾":340,"童裝 嬰兒服飾":0,"護理保健":260175,"護膚化妝":37977,"超級市場":633695,"運動旅行":9957},
+                "2026-07-23":{"内地直送":0,"大腦場":5431,"女士服飾":560,"家品傢俬":5890,"家居電器":6748,"寵物用品":12957,"母嬰育兒":1178,"玩具圖書":75,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":60495,"護膚化妝":6237,"超級市場":254694,"運動旅行":1884},
+                "2026-07-24":{"内地直送":0,"大腦場":1891,"女士服飾":187,"家品傢俬":4508,"家居電器":4237,"寵物用品":4584,"母嬰育兒":1014,"玩具圖書":120,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":36840,"護膚化妝":3277,"超級市場":275278,"運動旅行":1479},
+                "2026-07-25":{"内地直送":0,"大腦場":1720,"女士服飾":989,"家品傢俬":11897,"家居電器":12381,"寵物用品":35715,"母嬰育兒":6911,"玩具圖書":276,"男士服飾":241,"童裝 嬰兒服飾":0,"護理保健":145641,"護膚化妝":20476,"超級市場":535409,"運動旅行":1177},
+                "2026-07-26":{"内地直送":0,"大腦場":5468,"女士服飾":2675,"家品傢俬":8113,"家居電器":10346,"寵物用品":30682,"母嬰育兒":2826,"玩具圖書":271,"男士服飾":315,"童裝 嬰兒服飾":0,"護理保健":145531,"護膚化妝":25341,"超級市場":556926,"運動旅行":1021},
+                "2026-07-27":{"内地直送":0,"大腦場":5536,"女士服飾":1716,"家品傢俬":5917,"家居電器":18660,"寵物用品":5811,"母嬰育兒":835,"玩具圖書":154,"男士服飾":49,"童裝 嬰兒服飾":0,"護理保健":29355,"護膚化妝":4552,"超級市場":250656,"運動旅行":1054},
+                "2026-07-28":{"内地直送":0,"大腦場":1812,"女士服飾":40,"家品傢俬":2298,"家居電器":5687,"寵物用品":5205,"母嬰育兒":1137,"玩具圖書":158,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":49582,"護膚化妝":7893,"超級市場":298432,"運動旅行":1343},
+                "2026-07-29":{"内地直送":31,"大腦場":9136,"女士服飾":1812,"家品傢俬":45564,"家居電器":105815,"寵物用品":83142,"母嬰育兒":10931,"玩具圖書":3118,"男士服飾":681,"童裝 嬰兒服飾":658,"護理保健":298309,"護膚化妝":32921,"超級市場":859044,"運動旅行":8910},
+                "2026-07-30":{"内地直送":0,"大腦場":1442,"女士服飾":1032,"家品傢俬":4907,"家居電器":15716,"寵物用品":9991,"母嬰育兒":1272,"玩具圖書":461,"男士服飾":274,"童裝 嬰兒服飾":0,"護理保健":52927,"護膚化妝":8295,"超級市場":240964,"運動旅行":2587},
+                "2026-07-31":{"内地直送":0,"大腦場":1140,"女士服飾":47,"家品傢俬":4657,"家居電器":6048,"寵物用品":7809,"母嬰育兒":1430,"玩具圖書":865,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":35110,"護膚化妝":4094,"超級市場":249107,"運動旅行":285},
+                "2026-08-01":{"内地直送":0,"大腦場":8113,"女士服飾":2155,"家品傢俬":8466,"家居電器":15664,"寵物用品":38385,"母嬰育兒":9401,"玩具圖書":410,"男士服飾":139,"童裝 嬰兒服飾":0,"護理保健":140223,"護膚化妝":19613,"超級市場":560201,"運動旅行":3574},
+                "2026-08-02":{"内地直送":0,"大腦場":17036,"女士服飾":1232,"家品傢俬":10179,"家居電器":9898,"寵物用品":37895,"母嬰育兒":3095,"玩具圖書":927,"男士服飾":49,"童裝 嬰兒服飾":0,"護理保健":168030,"護膚化妝":22269,"超級市場":499456,"運動旅行":1558},
+                "2026-08-03":{"内地直送":0,"大腦場":3081,"女士服飾":136,"家品傢俬":3211,"家居電器":17162,"寵物用品":5785,"母嬰育兒":1169,"玩具圖書":601,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":24426,"護膚化妝":2941,"超級市場":207737,"運動旅行":330},
+                "2026-08-04":{"内地直送":0,"大腦場":0,"女士服飾":0,"家品傢俬":280,"家居電器":0,"寵物用品":0,"母嬰育兒":0,"玩具圖書":0,"男士服飾":0,"童裝 嬰兒服飾":0,"護理保健":124,"護膚化妝":267,"超級市場":708,"運動旅行":0}
+            }
+        };
+
+        function fmtHKD(n) {
+            if (n === 0 || !n) return null;
+            return '$' + n.toLocaleString('en-US');
+        }
+        function fmtPct(part, total) {
+            if (part === 0 || total === 0) return null;
+            return (part / total * 100).toFixed(1) + '%';
+        }
+        function fmtDate(d) {
+            const parts = d.split('-');
+            return parseInt(parts[2]) + '/' + parseInt(parts[1]);
+        }
+
+        // Build GMV table
+        const gmvHead = document.getElementById('catGmvHead');
+        const gmvBody = document.getElementById('catGmvBody');
+        gmvHead.innerHTML = '<th>Date</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
+
+        for (const date of CAT_DATA.last7) {
+            const row = document.createElement('tr');
+            const td0 = document.createElement('td');
+            td0.textContent = fmtDate(date);
+            row.appendChild(td0);
+            const total = CAT_DATA.tableData[date]._t.g;
+            for (const cat of CAT_DATA.cats) {
+                const td = document.createElement('td');
+                const val = CAT_DATA.tableData[date][cat].g;
+                const amt = fmtHKD(val);
+                const pct = fmtPct(val, total);
+                if (amt) {
+                    const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
+                    td.innerHTML = '<div class="' + cls + '">' + amt + '</div>' + (pct ? '<div class="cat-pct">' + pct + '</div>' : '');
+                } else {
+                    td.innerHTML = '<div class="cat-dash">-</div>';
+                }
+                row.appendChild(td);
+            }
+            const tdT = document.createElement('td');
+            tdT.innerHTML = '<div class="cat-amount cat-highlight">' + fmtHKD(total) + '</div>';
+            row.appendChild(tdT);
+            gmvBody.appendChild(row);
+        }
+        // GMV summary row
+        const gmvSumRow = document.createElement('tr');
+        gmvSumRow.className = 'cat-total-row';
+        gmvSumRow.innerHTML = '<td>7-Day Total</td>';
+        let gmvGrandTotal = 0;
+        for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) gmvGrandTotal += CAT_DATA.tableData[date][cat].g; }
+        for (const cat of CAT_DATA.cats) {
+            let catSum = 0;
+            for (const date of CAT_DATA.last7) catSum += CAT_DATA.tableData[date][cat].g;
+            const amt = fmtHKD(catSum);
+            if (amt) {
+                const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
+                gmvSumRow.innerHTML += '<td><div class="' + cls + '">' + amt + '</div><div class="cat-pct">' + fmtPct(catSum, gmvGrandTotal) + '</div></td>';
+            } else { gmvSumRow.innerHTML += '<td><div class="cat-dash">-</div></td>'; }
+        }
+        gmvSumRow.innerHTML += '<td><div class="cat-amount cat-highlight">' + fmtHKD(gmvGrandTotal) + '</div></td>';
+        gmvBody.appendChild(gmvSumRow);
+
+        // Build Customer table
+        const custHead = document.getElementById('catCustHead');
+        const custBody = document.getElementById('catCustBody');
+        custHead.innerHTML = '<th>Date</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
+
+        for (const date of CAT_DATA.last7) {
+            const row = document.createElement('tr');
+            const td0 = document.createElement('td');
+            td0.textContent = fmtDate(date);
+            row.appendChild(td0);
+            const total = CAT_DATA.tableData[date]._t.c;
+            for (const cat of CAT_DATA.cats) {
+                const td = document.createElement('td');
+                const val = CAT_DATA.tableData[date][cat].c;
+                const pct = fmtPct(val, total);
+                if (val > 0) {
+                    const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
+                    td.innerHTML = '<div class="' + cls + '">' + val.toLocaleString('en-US') + '</div>' + (pct ? '<div class="cat-pct">' + pct + '</div>' : '');
+                } else {
+                    td.innerHTML = '<div class="cat-dash">-</div>';
+                }
+                row.appendChild(td);
+            }
+            const tdT = document.createElement('td');
+            tdT.innerHTML = '<div class="cat-amount cat-highlight">' + total.toLocaleString('en-US') + '</div>';
+            row.appendChild(tdT);
+            custBody.appendChild(row);
+        }
+        // Customer summary row
+        const custSumRow = document.createElement('tr');
+        custSumRow.className = 'cat-total-row';
+        custSumRow.innerHTML = '<td>7-Day Total</td>';
+        let custGrandTotal = 0;
+        for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) custGrandTotal += CAT_DATA.tableData[date][cat].c; }
+        for (const cat of CAT_DATA.cats) {
+            let catSum = 0;
+            for (const date of CAT_DATA.last7) catSum += CAT_DATA.tableData[date][cat].c;
+            if (catSum > 0) {
+                const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
+                custSumRow.innerHTML += '<td><div class="' + cls + '">' + catSum.toLocaleString('en-US') + '</div><div class="cat-pct">' + fmtPct(catSum, custGrandTotal) + '</div></td>';
+            } else { custSumRow.innerHTML += '<td><div class="cat-dash">-</div></td>'; }
+        }
+        custSumRow.innerHTML += '<td><div class="cat-amount cat-highlight">' + custGrandTotal.toLocaleString('en-US') + '</div></td>';
+        custBody.appendChild(custSumRow);
+
+        // Build chart
+        const catColors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8AC24A','#E6194B','#3CB371','#FF69B4','#20B2AA','#DAA520','#FF4444','#6495ED'];
+        const chartCtx = document.getElementById('categoryChart').getContext('2d');
+        const chartDatasets = CAT_DATA.cats.map((cat, i) => ({
+            label: cat,
+            data: CAT_DATA.last30.map(d => CAT_DATA.chartData[d][cat] || 0),
+            backgroundColor: catColors[i % catColors.length],
+            borderColor: catColors[i % catColors.length],
+            borderWidth: 0.5,
+            stack: 'stack0'
+        }));
+        const chartLabels = CAT_DATA.last30.map(d => fmtDate(d));
+
+        new Chart(chartCtx, {
+            type: 'bar',
+            data: { labels: chartLabels, datasets: chartDatasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: true, position: 'right', labels: { color: '#475569', font: { size: 11 }, boxWidth: 12, padding: 6 } },
+                    tooltip: { mode: 'index', intersect: false, callbacks: { label: function(ctx) { return ctx.dataset.label + ': $' + ctx.parsed.y.toLocaleString('en-US'); } } }
+                },
+                scales: {
+                    x: { stacked: true, ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+                    y: { stacked: true, ticks: { color: '#64748b', callback: function(v) { return '$' + (v/1000).toFixed(0) + 'K'; } }, grid: { color: '#e2e8f0' } }
+                },
+                interaction: { mode: 'index', intersect: false }
+            }
         });
     })();
     </script>
