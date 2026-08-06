@@ -27,6 +27,12 @@
         .filter-checkbox input { margin: 0; width: 11px; height: 11px; min-width: 0; }
         .selected-count { font-size: 11px; color: #64748b; margin-left: 4px; }
         .filter-buttons { display: flex; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+        .quick-date {
+            font-size: 11px; padding: 2px 6px; border: 1px solid #e2e8f0;
+            border-radius: 4px; background: white; cursor: pointer; transition: all 0.15s;
+        }
+        .quick-date:hover { border-color: #3949ab; background: #e8eaf6; }
+        .quick-date.active { background: #3949ab; color: white; border-color: #3949ab; }
         .btn { padding: 10px 24px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: #3949ab; color: white; }
         .btn-primary:hover { background: #303f9f; }
@@ -127,10 +133,7 @@
         <div class="filters-row">
             <div class="filter-group">
                 <label>Start Date</label>
-                <input type="date" id="startDate" value="2025-01-01" min="2025-01-01">
-                <div style="display: flex; gap: 4px; margin-top: 4px;">
-                    <button class="quick-date" onclick="setStartDate('yesterday')" style="font-size: 11px; padding: 2px 6px; border: 1px solid #e2e8f0; border-radius: 4px; background: white; cursor: pointer;">Yesterday</button>
-                </div>
+                <input type="date" id="startDate" value="2026-08-01" min="2025-01-01">
             </div>
             <div class="filter-group">
                 <label>End Date</label>
@@ -146,7 +149,7 @@
                     <div class="filter-multi" id="yearMulti">
                         <label class="filter-checkbox"><input type="checkbox" value="all" id="yearAll" onchange="updateFilterLabel('year')"> All</label>
                         <label class="filter-checkbox"><input type="checkbox" value="2025" onchange="updateFilterLabel('year')"> 2025</label>
-                        <label class="filter-checkbox"><input type="checkbox" value="2026" checked onchange="updateFilterLabel('year')"> 2026</label>
+                        <label class="filter-checkbox"><input type="checkbox" value="2026" onchange="updateFilterLabel('year')"> 2026</label>
                     </div>
                 </div>
             </div>
@@ -166,7 +169,7 @@
                         <label class="filter-checkbox"><input type="checkbox" value="5" onchange="updateFilterLabel('month')"> May</label>
                         <label class="filter-checkbox"><input type="checkbox" value="6" onchange="updateFilterLabel('month')"> Jun</label>
                         <label class="filter-checkbox"><input type="checkbox" value="7" onchange="updateFilterLabel('month')"> Jul</label>
-                        <label class="filter-checkbox"><input type="checkbox" value="8" checked onchange="updateFilterLabel('month')"> Aug</label>
+                        <label class="filter-checkbox"><input type="checkbox" value="8" onchange="updateFilterLabel('month')"> Aug</label>
                         <label class="filter-checkbox"><input type="checkbox" value="9" onchange="updateFilterLabel('month')"> Sep</label>
                         <label class="filter-checkbox"><input type="checkbox" value="10" onchange="updateFilterLabel('month')"> Oct</label>
                         <label class="filter-checkbox"><input type="checkbox" value="11" onchange="updateFilterLabel('month')"> Nov</label>
@@ -205,6 +208,18 @@
                         <label class="filter-checkbox"><input type="checkbox" value="online" checked onchange="updateFilterLabel('channel')"> Online</label>
                         <label class="filter-checkbox"><input type="checkbox" value="pos" checked onchange="updateFilterLabel('channel')"> POS</label>
                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="filters-row" style="margin-top: 8px;">
+            <div class="filter-group" style="flex-direction: row; align-items: center; gap: 8px;">
+                <label style="margin-bottom: 0;">Quick Select:</label>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                    <button class="quick-date" data-preset="yesterday" onclick="setDatePreset('yesterday')">Yesterday</button>
+                    <button class="quick-date" data-preset="thisMonth" onclick="setDatePreset('thisMonth')">This Month</button>
+                    <button class="quick-date" data-preset="lastMonth" onclick="setDatePreset('lastMonth')">Last Month</button>
+                    <button class="quick-date" data-preset="thisWeek" onclick="setDatePreset('thisWeek')">This Week</button>
+                    <button class="quick-date" data-preset="lastWeek" onclick="setDatePreset('lastWeek')">Last Week</button>
                 </div>
             </div>
         </div>
@@ -352,11 +367,11 @@
 
     <!-- ===== Category Analysis Section ===== -->
     <div class="cat-section">
-        <h2 class="cat-section-title">📊 Daily Online GMV &amp; Customers by Category</h2>
+        <h2 class="cat-section-title">📊 Daily Online GMV &amp; Customers by Category (<span id="catDateRange">default</span>)</h2>
 
         <!-- Chart: 30-day trend -->
         <div class="cat-chart-card">
-            <h3>Daily Online GMV by Category — Past <span id="chartDayCount">30</span> Days</h3>
+            <h3>Daily Online GMV by Category (<span id="chartDateRange">30 days</span>)</h3>
             <div class="cat-chart-wrap">
                 <canvas id="categoryChart"></canvas>
             </div>
@@ -368,7 +383,7 @@
                 <button class="cat-export-btn" onclick="exportCatCSV('gmv')">⬇ Export CSV</button>
                 <div class="cat-scroll-hint">↔ Scroll horizontally to see all categories →</div>
             </div>
-            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Online GMV by Category — Past <span id="gmvDayCount">7</span> Days (HKD with % of Daily Total)</h3>
+            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Online GMV by Category (<span id="gmvDateRange">7 days</span>) — HKD with % of Daily Total</h3>
             <table class="cat-table" id="gmvTable">
                 <thead><tr id="catGmvHead"></tr></thead>
                 <tbody id="catGmvBody"></tbody>
@@ -381,7 +396,7 @@
                 <button class="cat-export-btn" onclick="exportCatCSV('cust')">⬇ Export CSV</button>
                 <div class="cat-scroll-hint">↔ Scroll horizontally to see all categories →</div>
             </div>
-            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Number of Customers by Category — Past <span id="custDayCount">7</span> Days (Count with % of Daily Total)</h3>
+            <h3 style="padding:12px 0;font-size:14px;color:#1e293b;">Daily Number of Customers by Category (<span id="custDateRange">7 days</span>) — Count with % of Daily Total</h3>
             <table class="cat-table" id="custTable">
                 <thead><tr id="catCustHead"></tr></thead>
                 <tbody id="catCustBody"></tbody>
@@ -475,45 +490,50 @@
             // If no channels selected, default to all
             const effectiveChannels = selectedChannels.length > 0 ? selectedChannels : ['online', 'pos'];
 
-            let filtered = processData(salesData);
+            let baseFiltered = processData(salesData);
 
             if (startDate) {
                 const start = new Date(startDate);
-                filtered = filtered.filter(d => d.dateObj >= start);
+                baseFiltered = baseFiltered.filter(d => d.dateObj >= start);
             }
             if (endDate) {
                 const end = new Date(endDate);
                 end.setHours(23, 59, 59);
-                filtered = filtered.filter(d => d.dateObj <= end);
+                baseFiltered = baseFiltered.filter(d => d.dateObj <= end);
             }
             if (selectedYears.length > 0) {
-                filtered = filtered.filter(d => selectedYears.includes(String(d.year)));
+                baseFiltered = baseFiltered.filter(d => selectedYears.includes(String(d.year)));
             }
             if (selectedMonths.length > 0) {
-                filtered = filtered.filter(d => selectedMonths.includes(String(d.month)));
+                baseFiltered = baseFiltered.filter(d => selectedMonths.includes(String(d.month)));
             }
             if (selectedWeekdays.length > 0) {
-                filtered = filtered.filter(d => selectedWeekdays.includes(String(d.weekday)));
+                baseFiltered = baseFiltered.filter(d => selectedWeekdays.includes(String(d.weekday)));
             }
 
-            currentFilteredData = filtered;
-            
-            // Build date range text for KPI headers
+            currentFilteredData = baseFiltered;
+
+            // Build date range text for KPI headers (Logic B)
             let dateRangeText = 'Filtered Period';
-            if (filtered.length > 0) {
-                const dates = filtered.map(d => d.dateObj);
+            if (baseFiltered.length > 0) {
+                const dates = baseFiltered.map(d => d.dateObj);
                 const minDate = new Date(Math.min(...dates));
                 const maxDate = new Date(Math.max(...dates));
                 dateRangeText = `${minDate.toLocaleDateString()} - ${maxDate.toLocaleDateString()}`;
             }
-            
-            updateTable(processData(salesData));  // Always show last 7 days regardless of month filter
-            updateCharts(filtered, effectiveChannels);
-            updateKPIs(filtered, effectiveChannels, dateRangeText);
-            updateAchievement();  // Update MTD achievement
 
-            // Re-render category section with filtered dates
-            const catDates = filtered.map(d => d.date).sort();
+            // LOGIC A: Achievement — always current month, ignores date filter
+            updateAchievement();
+
+            // LOGIC B: KPIs (Overall/Online/POS) — use filtered data
+            updateKPIs(baseFiltered, effectiveChannels, dateRangeText);
+
+            // LOGIC C: Table + Charts + Category — use filtered data
+            updateTable(baseFiltered);
+            updateCharts(baseFiltered, effectiveChannels);
+
+            // Category section — re-render with filtered dates
+            const catDates = baseFiltered.map(d => d.date).sort();
             renderCategorySection(catDates);
         }
 
@@ -600,37 +620,83 @@
             });
         }
 
-        function setStartDate(preset) {
+        function ymd(d) {
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+
+        function highlightPreset(name) {
+            document.querySelectorAll('.quick-date').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector('.quick-date[data-preset="' + name + '"]');
+            if (btn) btn.classList.add('active');
+        }
+
+        function setDatePreset(preset) {
             const now = new Date();
+            let start, end;
+
+            // End date is always yesterday (latest available data)
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+
             if (preset === 'yesterday') {
-                const yesterday = new Date(now);
-                yesterday.setDate(yesterday.getDate() - 1);
-                const ymd = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-                document.getElementById('startDate').value = ymd;
-                document.getElementById('endDate').value = ymd;
+                start = new Date(yesterday);
+                end = new Date(yesterday);
+            } else if (preset === 'thisMonth') {
+                start = new Date(now.getFullYear(), now.getMonth(), 1);
+                end = new Date(yesterday);
+            } else if (preset === 'lastMonth') {
+                start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                end = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of last month
+            } else if (preset === 'thisWeek') {
+                // Week starts Monday
+                const day = now.getDay() || 7; // Sunday = 7
+                start = new Date(now);
+                start.setDate(start.getDate() - day + 1);
+                end = new Date(yesterday);
+                if (start > end) start = new Date(end); // Edge case: Monday before data available
+            } else if (preset === 'lastWeek') {
+                const day = now.getDay() || 7;
+                const thisMonday = new Date(now);
+                thisMonday.setDate(thisMonday.getDate() - day + 1);
+                start = new Date(thisMonday);
+                start.setDate(start.getDate() - 7);
+                end = new Date(thisMonday);
+                end.setDate(end.getDate() - 1);
             }
+
+            document.getElementById('startDate').value = ymd(start);
+            document.getElementById('endDate').value = ymd(end);
+
+            // Clear year/month/weekday filters when using presets
+            setSelectedValues('yearMulti', []);
+            setSelectedValues('monthMulti', []);
+            setSelectedValues('weekdayMulti', ['all']);
+            updateFilterLabel('year');
+            updateFilterLabel('month');
+            updateFilterLabel('weekday');
+
+            highlightPreset(preset);
             applyFilters();
         }
 
         function resetFilters() {
-            // Set start date to first of current month
             const now = new Date();
-            const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-            document.getElementById('startDate').value = firstOfMonth;
-            // Set end date to yesterday (or today if 1st of month)
+            // Default: 1st of this month to yesterday
+            const firstOfMonth = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
             const yesterday = new Date(now);
             yesterday.setDate(yesterday.getDate() - 1);
-            document.getElementById('endDate').value = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-            // Default to current month only
-            setSelectedValues('yearMulti', [String(now.getFullYear())]);
-            setSelectedValues('monthMulti', [String(now.getMonth() + 1)]);
+            document.getElementById('startDate').value = firstOfMonth;
+            document.getElementById('endDate').value = ymd(yesterday);
+            // Clear all multi-filters
+            setSelectedValues('yearMulti', []);
+            setSelectedValues('monthMulti', []);
             setSelectedValues('weekdayMulti', ['all']);
             setSelectedValues('channelMulti', ['online', 'pos']);
-            // Update labels
             updateFilterLabel('year');
             updateFilterLabel('month');
             updateFilterLabel('weekday');
             updateFilterLabel('channel');
+            highlightPreset('thisMonth');
             applyFilters();
         }
 
@@ -686,7 +752,7 @@
             
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            sortedData.slice(0, 7).forEach(row => {
+            sortedData.forEach(row => {
                 // Format change percentages with color
                 let gmvChangeHtml = '-';
                 let ordersChangeHtml = '-';
@@ -853,24 +919,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto-select current month in the filter (so KPIs default to current month)
-            var now = new Date();
-            var currentMonth = now.getMonth() + 1;  // 1-indexed
-            var monthCheckboxes = document.querySelectorAll('#monthMulti input[type="checkbox"]');
-            monthCheckboxes.forEach(function(cb) {
-                if (cb.value !== 'all') {
-                    cb.checked = (parseInt(cb.value) === currentMonth);
-                } else {
-                    cb.checked = false;
-                }
-            });
-
-            // Initialize filter labels
-            updateFilterLabel('year');
-            updateFilterLabel('month');
-            updateFilterLabel('weekday');
-            updateFilterLabel('channel');
-            applyFilters();
+            // Default to "This Month" preset
+            setDatePreset('thisMonth');
         });
     </script>
     <script>
@@ -954,7 +1004,7 @@
         }
         let grandTotal = 0;
         for (const cat of cats) { for (const date of last7) grandTotal += td[date][cat][measure]; }
-        let sumRow = '7-Day Total,,';
+        let sumRow = 'Total,,';
         for (const cat of cats) {
             let catSum = 0;
             for (const date of last7) catSum += td[date][cat][measure];
@@ -966,7 +1016,7 @@
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = 'Daily_' + prefix + '_by_Category_7day.csv';
+        link.download = 'Daily_' + prefix + '_by_Category.csv';
         link.click();
         URL.revokeObjectURL(link.href);
     }
@@ -1022,12 +1072,14 @@
 
         // Build dynamic CAT_DATA based on date filter
         const allDates = Object.keys(CAT_DATA_RAW.tableData).sort();
-        const filteredDates = dateList.filter(d => CAT_DATA_RAW.tableData[d]);
-        const last7 = (filteredDates.length > 0 ? filteredDates : allDates).slice(-7).reverse();
+        const filteredDates = dateList.filter(d => CAT_DATA_RAW.tableData.hasOwnProperty(d)).sort();
+        // Tables: show ALL filtered days (not just 7), newest first
+        const displayDates = (filteredDates.length > 0 ? filteredDates : allDates).slice().reverse();
+        // Chart: last 30 days of filtered range
         const last30 = (filteredDates.length > 0 ? filteredDates : allDates).slice(-30);
         const CAT_DATA = {
             ...CAT_DATA_RAW,
-            last7: last7,
+            last7: displayDates,  // 'last7' is now 'displayDates' — all filtered days
             last30: last30
         };
 
@@ -1054,6 +1106,7 @@
         // Build GMV table
         const gmvHead = document.getElementById('catGmvHead');
         const gmvBody = document.getElementById('catGmvBody');
+        gmvBody.innerHTML = '';  // Clear previous content
         gmvHead.innerHTML = '<th>Date</th><th>Weekday</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
 
         for (const date of CAT_DATA.last7) {
@@ -1104,6 +1157,7 @@
         // Build Customer table
         const custHead = document.getElementById('catCustHead');
         const custBody = document.getElementById('catCustBody');
+        custBody.innerHTML = '';  // Clear previous content
         custHead.innerHTML = '<th>Date</th><th>Weekday</th>' + CAT_DATA.cats.map(c => '<th>' + c + '</th>').join('') + '<th>Daily Total</th>';
 
         for (const date of CAT_DATA.last7) {
@@ -1149,13 +1203,30 @@
         custSumRow.innerHTML += '<td><div class="cat-amount cat-highlight">' + custGrandTotal.toLocaleString('en-US') + '</div></td>';
         custBody.appendChild(custSumRow);
 
-        // Update day count in table titles
-        const dcEl = document.getElementById('gmvDayCount');
-        if (dcEl) dcEl.textContent = CAT_DATA.last7.length;
-        const dcEl2 = document.getElementById('custDayCount');
-        if (dcEl2) dcEl2.textContent = CAT_DATA.last7.length;
-        const dcEl3 = document.getElementById('chartDayCount');
-        if (dcEl3) dcEl3.textContent = CAT_DATA.last30.length;
+        // Update date range text in titles
+        function dateRangeText(dates) {
+            if (!dates || dates.length === 0) return 'N/A';
+            if (dates.length === 1) return dates[0].replace(/-/g, '/');
+            return dates[dates.length - 1].replace(/-/g, '/') + ' - ' + dates[0].replace(/-/g, '/');
+        }
+        // displayDates is newest-first (reversed), so first=newest, last=oldest
+        const tableRange = CAT_DATA.last7.length > 0
+            ? dateRangeText(CAT_DATA.last7)
+            : 'N/A';
+        // last30 is chronological (oldest-first)
+        const chartDatesDesc = CAT_DATA.last30.slice().reverse();
+        const chartRange = CAT_DATA.last30.length > 0
+            ? dateRangeText(chartDatesDesc)
+            : 'N/A';
+
+        const er1 = document.getElementById('gmvDateRange');
+        if (er1) er1.textContent = tableRange;
+        const er2 = document.getElementById('custDateRange');
+        if (er2) er2.textContent = tableRange;
+        const er3 = document.getElementById('chartDateRange');
+        if (er3) er3.textContent = chartRange;
+        const er4 = document.getElementById('catDateRange');
+        if (er4) er4.textContent = tableRange;
 
         // Build chart
         const catColors = ['#FF6384','#36A2EB','#FFCE56','#4BC0C0','#9966FF','#FF9F40','#8AC24A','#E6194B','#3CB371','#FF69B4','#20B2AA','#DAA520','#FF4444','#6495ED'];
