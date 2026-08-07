@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Version: 2026-08-07 v7 - diagnostic debug overlay for category filter -->
+<!-- Version: 2026-08-07 v8 - debug overlay removed, full category data pipeline -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -125,7 +125,7 @@
     <div class="header">
         <h1>📱 Lite App Daily Sales Dashboard</h1>
         <div class="subtitle">Daily sales tracking from 2025-01-01 to 2026-08-06</div>
-        <div class="update-time">Data as of: 2026-08-07 10:58<strong style="color:#FFD700;">v7</strong></div>
+        <div class="update-time">Data as of: 2026-08-07 10:58 | <strong style="color:#FFD700;">v8</strong></div>
     </div>
 
     <div class="data-source">
@@ -372,7 +372,7 @@
     <!-- ===== Category Analysis Section ===== -->
     <div class="cat-section">
         <h2 class="cat-section-title">📊 Daily Online GMV &amp; Customers by Category (<span id="catDateRange">default</span>)</h2>
-        <div id="catDebug" style="background:#fff3cd;border:1px solid #ffeaa7;color:#856404;padding:8px 12px;border-radius:6px;margin-bottom:12px;font-size:13px;display:none;font-family:monospace;">Debug info will appear here</div>
+
 
         <!-- Chart: 30-day trend -->
         <div class="cat-chart-card">
@@ -540,13 +540,6 @@
             // Category section — re-render with filtered dates
             const catDates = baseFiltered.map(d => d.date).sort();
             renderCategorySection(catDates);
-
-            // DEBUG: Show what was passed to category section
-            var dbg = document.getElementById('catDebug');
-            if (dbg) {
-                dbg.textContent = 'Filter dates passed: ' + catDates.length + ' dates — ' + (catDates.length > 0 ? catDates[0] + ' to ' + catDates[catDates.length-1] : 'NONE');
-                dbg.style.display = 'block';
-            }
         }
 
         function updateAchievement() {
