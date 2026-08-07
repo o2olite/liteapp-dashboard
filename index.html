@@ -1091,10 +1091,11 @@
             const tdW = document.createElement('td');
             tdW.textContent = fmtWeekday(date);
             row.appendChild(tdW);
-            const total = CAT_DATA.tableData[date]._t.g;
+            const total = (CAT_DATA.tableData[date]._t || {}).g || 0;
             for (const cat of CAT_DATA.cats) {
                 const td = document.createElement('td');
-                const val = CAT_DATA.tableData[date][cat].g;
+                const catEntry = CAT_DATA.tableData[date][cat];
+                const val = catEntry ? catEntry.g : 0;
                 const amt = fmtHKD(val);
                 const pct = fmtPct(val, total);
                 if (amt) {
@@ -1115,10 +1116,10 @@
         gmvSumRow.className = 'cat-total-row';
         gmvSumRow.innerHTML = '<td>Total</td><td></td>';
         let gmvGrandTotal = 0;
-        for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) gmvGrandTotal += CAT_DATA.tableData[date][cat].g; }
+        for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) gmvGrandTotal += (CAT_DATA.tableData[date][cat] || {}).g || 0; }
         for (const cat of CAT_DATA.cats) {
             let catSum = 0;
-            for (const date of CAT_DATA.last7) catSum += CAT_DATA.tableData[date][cat].g;
+            for (const date of CAT_DATA.last7) catSum += (CAT_DATA.tableData[date][cat] || {}).g || 0;
             const amt = fmtHKD(catSum);
             if (amt) {
                 const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
@@ -1142,10 +1143,11 @@
             const tdW = document.createElement('td');
             tdW.textContent = fmtWeekday(date);
             row.appendChild(tdW);
-            const total = CAT_DATA.tableData[date]._t.c;
+            const total = (CAT_DATA.tableData[date]._t || {}).c || 0;
             for (const cat of CAT_DATA.cats) {
                 const td = document.createElement('td');
-                const val = CAT_DATA.tableData[date][cat].c;
+                const catEntry = CAT_DATA.tableData[date][cat];
+                const val = catEntry ? catEntry.c : 0;
                 const pct = fmtPct(val, total);
                 if (val > 0) {
                     const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
@@ -1165,10 +1167,10 @@
         custSumRow.className = 'cat-total-row';
         custSumRow.innerHTML = '<td>Total</td><td></td>';
         let custGrandTotal = 0;
-        for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) custGrandTotal += CAT_DATA.tableData[date][cat].c; }
+        for (const cat of CAT_DATA.cats) { for (const date of CAT_DATA.last7) custGrandTotal += (CAT_DATA.tableData[date][cat] || {}).c || 0; }
         for (const cat of CAT_DATA.cats) {
             let catSum = 0;
-            for (const date of CAT_DATA.last7) catSum += CAT_DATA.tableData[date][cat].c;
+            for (const date of CAT_DATA.last7) catSum += (CAT_DATA.tableData[date][cat] || {}).c || 0;
             if (catSum > 0) {
                 const cls = cat === '超級市場' ? 'cat-amount cat-highlight' : 'cat-amount';
                 custSumRow.innerHTML += '<td><div class="' + cls + '">' + catSum.toLocaleString('en-US') + '</div><div class="cat-pct">' + fmtPct(catSum, custGrandTotal) + '</div></td>';
