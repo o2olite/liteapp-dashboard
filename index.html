@@ -1060,18 +1060,21 @@
         // chart
         const ctx = document.getElementById('trafficChart');
         if (!ctx || typeof Chart === 'undefined') return;
+        const chartD = (window._trafficUserTouched) ? d : TRAFFIC_DATA.slice(-30);
+        const cTitle = document.getElementById('trafficChartTitle');
+        if (cTitle && !window._trafficUserTouched) cTitle.textContent = '近 30 日流量走勢（每日）';
         if (window._trafficChart) window._trafficChart.destroy();
         window._trafficChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: d.map(x => {
+                labels: chartD.map(x => {
                     const [yy, mm, dd] = x.date.split('-');
                     const wd = new Date(Date.UTC(yy, mm-1, dd)).getUTCDay();
                     return (parseInt(mm) + '/' + parseInt(dd)) + (wd === 3 ? ' ✱' : '');
                 }),
                 datasets: [
-                    { label: 'Sessions', data: d.map(x => x.session), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', fill: true, tension: 0.35, pointRadius: 2, yAxisID: 'y' },
-                    { label: 'Unique Visitors', data: d.map(x => x.uv), borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.10)', fill: true, tension: 0.35, pointRadius: 2, yAxisID: 'y' }
+                    { label: 'Sessions', data: chartD.map(x => x.session), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.08)', fill: true, tension: 0.35, pointRadius: 2, yAxisID: 'y' },
+                    { label: 'Unique Visitors', data: chartD.map(x => x.uv), borderColor: '#0d9488', backgroundColor: 'rgba(13,148,136,0.10)', fill: true, tension: 0.35, pointRadius: 2, yAxisID: 'y' }
                 ]
             },
             options: {
