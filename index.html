@@ -369,7 +369,7 @@
     <div class="traffic-section" id="trafficSection">
         <div class="traffic-header">
             <h2>🚀 應用流量 App Traffic</h2>
-            <span class="badge">📅 近 30 日</span>
+            <span class="badge" id="trafficDateBadge">📅 近 30 日</span>
         </div>
         <div class="kpi-cards" id="trafficKpis">
             <div class="kpi-card" style="border-top: 3px solid #10b981;">
@@ -394,7 +394,7 @@
             </div>
         </div>
         <div class="chart-card">
-            <h3>30 日流量走勢</h3>
+            <h3 id="trafficChartTitle">30 日流量走勢</h3>
             <div style="position: relative; height: 320px; width: 100%;">
                 <canvas id="trafficChart"></canvas>
             </div>
@@ -605,6 +605,7 @@
             // Category section — re-render with filtered dates
             const catDates = baseFiltered.map(d => d.date).sort();
             renderCategorySection(catDates);
+            renderTraffic(catDates);
         }
 
         function updateAchievement() {
@@ -991,10 +992,33 @@
 
         
     // ===== App Traffic Section (added 2026-08-27) =====
-    (function renderTraffic() {
+    function renderTraffic(dateList) {
+        const badgeEl = document.getElementById('trafficDateBadge');
+        const titleEl = document.getElementById('trafficChartTitle');
         if (typeof TRAFFIC_DATA === 'undefined' || !TRAFFIC_DATA.length) return;
-        const d = TRAFFIC_DATA;
+        let d = TRAFFIC_DATA;
+        if (dateList && dateList.length) {
+            const _set = new Set(dateList);
+            const _fd = d.filter(x => _set.has(x.date));
+            if (_fd.length) { d = _fd; }
+            else {
+                if (badgeEl) badgeEl.textContent = '📅 所選時段無流量數據（僅提供近 30 日）';
+                if (titleEl) titleEl.textContent = '流量走勢';
+                ['tkPv','tkSe','tkDv','tkCv'].forEach(function(id){
+                    const el = document.getElementById(id); if (el) el.textContent = 'N/A';
+                    const ch = document.getElementById(id + 'Ch'); if (ch) { ch.textContent = '—'; ch.className = 'change'; }
+                });
+                if (window._trafficChart) { window._trafficChart.destroy(); window._trafficChart = null; }
+                return;
+            }
+        }
         const last = d[d.length-1];
+        const fmtMD = function(ds){ const p = ds.split('-'); return parseInt(p[1]) + '/' + parseInt(p[2]); };
+        const isFiltered = dateList && dateList.length && d.length < TRAFFIC_DATA.length;
+        if (badgeEl) badgeEl.textContent = isFiltered
+            ? '📅 ' + fmtMD(d[0].date) + ' – ' + fmtMD(last.date)
+            : '📅 近 30 日（至 ' + fmtMD(last.date) + '）';
+        if (titleEl) titleEl.textContent = (isFiltered ? fmtMD(d[0].date) + ' – ' + fmtMD(last.date) : '近 30 日') + ' 流量走勢';
         function addDays(dateStr, n) {
             const [y, m, dd] = dateStr.split('-').map(Number);
             const dt = new Date(Date.UTC(y, m - 1, dd + n));
@@ -1020,7 +1044,8 @@
         // chart
         const ctx = document.getElementById('trafficChart');
         if (!ctx || typeof Chart === 'undefined') return;
-        new Chart(ctx, {
+        if (window._trafficChart) window._trafficChart.destroy();
+        window._trafficChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: d.map(x => {
@@ -1045,7 +1070,8 @@
         });
         // fix canvas height
         ctx.parentElement.style.height = '300px';
-    })();
+    }
+    renderTraffic();;
 
         document.addEventListener('DOMContentLoaded', function() {
             // Default to "This Month" preset
