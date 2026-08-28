@@ -405,7 +405,7 @@
     <!-- ===== /App Traffic Section ===== -->
 
     <div class="data-table">
-        <h3>Daily Sales Details by Channel (Last 7 Days)</h3>
+        <h3 id="salesTableTitle">Daily Sales Details by Channel (Last 7 Days)</h3>
         <table id="salesTable">
             <thead>
                 <tr>
@@ -752,6 +752,7 @@
         }
 
         function resetFilters() {
+            window._filterUserTouched = false;  // Reset = back to default view (7-day table, yesterday traffic)
             const now = new Date();
             // Default: 1st of this month to yesterday
             const firstOfMonth = ymd(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -823,7 +824,14 @@
             let html = '';
             
             const sortedData = [...data].sort((a, b) => new Date(b.date) - new Date(a.date));
-            const shownData = sortedData.slice(0, 7);  // default: recent 7 days only
+            // Default view: recent 7 days. After user applies a filter: show ALL selected days
+            const shownData = (window._filterUserTouched) ? sortedData : sortedData.slice(0, 7);
+            const st = document.getElementById('salesTableTitle');
+            if (st) {
+                st.textContent = (window._filterUserTouched && shownData.length !== 7)
+                    ? 'Daily Sales Details by Channel (' + shownData.length + ' days: ' + shownData[shownData.length-1].date + ' → ' + shownData[0].date + ')'
+                    : 'Daily Sales Details by Channel (Last 7 Days)';
+            }
             
             shownData.forEach(row => {
                 // Format change percentages with color
@@ -1007,7 +1015,7 @@
         };
         if (typeof TRAFFIC_DATA === 'undefined' || !TRAFFIC_DATA.length) return;
         let d = TRAFFIC_DATA;
-        if (!window._trafficUserTouched) {
+        if (!window._filterUserTouched) {
             // No user interaction yet: always show yesterday (latest day) until a filter is applied
             d = [d[d.length - 1]];
         } else if (dateList && dateList.length) {
@@ -1015,9 +1023,9 @@
             const _fd = d.filter(x => _set.has(x.date));
             if (_fd.length) { d = _fd; }
             else {
-                if (badgeEl) badgeEl.textContent = '📅 所選時段無流量數據（僅提供近 30 日）';
+                if (badgeEl) badgeEl.textContent = '📅 所選時段無流量數據';
                 if (titleEl) titleEl.textContent = '流量走勢';
-                clearKpis('⚠️ 所選時段無流量數據（僅提供近 30 日）');
+                clearKpis('⚠️ 所選時段無流量數據');
                 return;
             }
         }
@@ -1027,8 +1035,8 @@
         const nDays = d.length;
         const agg = (nDays === 1)
             ? { pv: last.uv, se: last.session, dv: last.device, cv: last.session/(last.uv||1) }
-            : { pv: sum('uv'), se: sum('session'), dv: sum('device'), cv: sum('session')/(sum('uv')||1) };
-        const mode = (nDays === 1) ? '單日' : ('期內總數 · ' + nDays + ' 日累計');
+            : { pv: Math.round(sum('uv')/nDays), se: Math.round(sum('session')/nDays), dv: Math.round(sum('device')/nDays), cv: sum('session')/(sum('uv')||1) };
+        const mode = (nDays === 1) ? '單日' : ('日均 · ' + nDays + ' 日平均');
         const fmtMD = function(ds){ const p = ds.split('-'); return parseInt(p[1]) + '/' + parseInt(p[2]); };
         const periodTxt = (nDays === 1) ? (fmtMD(last.date) + '（單日）') : (fmtMD(d[0].date) + ' – ' + fmtMD(last.date) + '（' + mode + '）');
         if (headEl) headEl.textContent = '📊 數據期間：' + periodTxt;
@@ -1049,9 +1057,12 @@
             chEl.textContent = (pct >= 0 ? '▲ ' : '▼ ') + Math.abs(pct).toFixed(1) + '% vs 上週';
             chEl.className = 'change ' + (pct >= 0 ? 'up' : 'down');
         }
-        // WoW comparison only meaningful for single-day view
-        const wIdx = (nDays === 1) ? findIdx(addDays(last.date, -7)) : -1;
-        const w = wIdx >= 0 ? d[wIdx] : null;
+        // WoW comparison only meaningful for single-day view — look up in FULL data (d may be filtered to 1 day)
+        let w = null;
+        if (nDays === 1) {
+            const wDate = addDays(last.date, -7);
+            w = TRAFFIC_DATA.find(function(x){ return x.date === wDate; }) || null;
+        }
         setKpi('tkPv', agg.pv, w ? w.uv : null);
         setKpi('tkSe', agg.se, w ? w.session : null);
         setKpi('tkDv', agg.dv, w ? w.device : null);
@@ -1060,9 +1071,9 @@
         // chart
         const ctx = document.getElementById('trafficChart');
         if (!ctx || typeof Chart === 'undefined') return;
-        const chartD = (window._trafficUserTouched) ? d : TRAFFIC_DATA.slice(-30);
+        const chartD = (window._filterUserTouched) ? d : TRAFFIC_DATA.slice(-30);
         const cTitle = document.getElementById('trafficChartTitle');
-        if (cTitle && !window._trafficUserTouched) cTitle.textContent = '近 30 日流量走勢（每日）';
+        if (cTitle && !window._filterUserTouched) cTitle.textContent = '近 30 日流量走勢（每日）';
         if (window._trafficChart) window._trafficChart.destroy();
         window._trafficChart = new Chart(ctx, {
             type: 'line',
@@ -1093,9 +1104,9 @@
     renderTraffic();
     // Track real user filter interaction (capture phase, fires before onclick handlers)
     document.addEventListener('click', function(ev) {
-        if (ev.isTrusted && window._trafficUserTouched !== true) {
+        if (ev.isTrusted && window._filterUserTouched !== true) {
             const box = document.querySelector('.filters');
-            if (box && box.contains(ev.target)) window._trafficUserTouched = true;
+            if (box && box.contains(ev.target)) window._filterUserTouched = true;
         }
     }, true);
 
@@ -1217,7 +1228,8 @@
         const filteredDates = dateList.filter(d => CAT_DATA_RAW.tableData.hasOwnProperty(d)).sort();
         // Tables: show filtered days that have category data, newest first
         // If no filtered dates match, show empty state (NOT fallback to all dates)
-        const displayDates = filteredDates.slice(-7).reverse();  // default: recent 7 days only
+        // Default view: recent 7 days. After user applies a filter: show ALL selected days
+        const displayDates = (window._filterUserTouched) ? filteredDates.slice().reverse() : filteredDates.slice(-7).reverse();
         // Chart: last 30 days of filtered range (or all if fewer)
         const chartDates = filteredDates.slice(-30);
         const CAT_DATA = {
