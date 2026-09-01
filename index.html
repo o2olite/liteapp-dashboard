@@ -1113,8 +1113,17 @@
     }, true);
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Default to "This Month" preset
-            setDatePreset('thisMonth');
+            // Default to "This Month" preset — but on the 1st of a new month,
+            // "thisMonth start (1st) > yesterday (last month)" would invert the
+            // range and zero out all KPIs. Fall back to last month's full range.
+            var _now = new Date();
+            var _yday = new Date(_now); _yday.setDate(_now.getDate() - 1);
+            var _mStart = new Date(_now.getFullYear(), _now.getMonth(), 1);
+            if (_mStart > _yday) {
+                setDatePreset('lastMonth');
+            } else {
+                setDatePreset('thisMonth');
+            }
         });
     </script>
     <script>
