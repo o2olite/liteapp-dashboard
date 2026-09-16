@@ -592,7 +592,7 @@
     <!-- ===== Part 5: Online Product-Level SKU Movers (LITE) ===== -->
     <div class="sku-section">
         <div class="part-banner"><span class="part-num">Part 5</span><span class="part-title">Online Product-Level SKU Movers (LITE)</span><span class="part-badge" id="skuDateBadge">—</span></div>
-        <div class="nc-legend" style="margin-bottom:14px;">Every table shows the table's own metric first (absolute + Δ + %), then the other three <strong>absolute</strong> amounts — all for the selected date range. Δ and % compare the range against the same number of days shifted back 7 days (WoW). <em>new</em> = no sales in the comparison window. ⚠ mark = single-unit sale (high-ticket, low volume).</div>
+        <div class="nc-legend" style="margin-bottom:14px;">Every table shows the table's own metric first (absolute + Δ + %), then the other three <strong>absolute</strong> amounts — all for the selected date range. Δ and % compare the range against the <strong>same number of days immediately before it</strong> (a single day compares against the same weekday last week). <em>new</em> = no sales in the comparison window. ⚠ mark = single-unit sale (high-ticket, low volume).</div>
         <div class="sku-avail" id="skuP5Summary">—</div>
         <div class="sku-grid">
             <div class="sku-table-wrap">
@@ -1877,7 +1877,16 @@ function fmtDateNC(yyyymmdd) {
             if (!dates.length) { if (badge) badge.textContent = '📅 SKU 數據未載入'; return; }
             var from = dates[0], to = dates[dates.length - 1];
             var nDays = Math.round((Date.parse(to) - Date.parse(from)) / 864e5) + 1;
-            var bFrom = p5Shift(from, -7), bTo = p5Shift(to, -7);
+            // Comparison window.
+            //   single day -> the same weekday last week (no overlap; the classic WoW).
+            //   a range     -> the SAME NUMBER OF DAYS immediately BEFORE it.
+            // Shifting a whole range back 7 days overlaps it by (N-7) days, which mutes the change:
+            // measured 2026-09-16, Aug 1-31 read +2.3% against Jul25-Aug24 (24 of 31 days shared)
+            // instead of the true +8.0% against Jul 1-31. Hence: no overlap, and the label says
+            // exactly what is being compared instead of a bare "WoW".
+            var single = (from === to);
+            var bTo = single ? p5Shift(from, -7) : p5Shift(from, -1);
+            var bFrom = single ? bTo : p5Shift(bTo, -(nDays - 1));
             if (badge) badge.textContent = '⏳ ' + from + ' → ' + to + ' …';
             try {
                 await p5Ensure(bFrom, bTo);
@@ -1885,12 +1894,13 @@ function fmtDateNC(yyyymmdd) {
                 var T = p5Tables(cur, base);
                 var rng = (from === to) ? from : (from + ' – ' + to + ' (' + nDays + ' days)');
                 var brng = (bFrom === bTo) ? bFrom : (bFrom + ' – ' + bTo);
-                if (badge) badge.textContent = '📅 ' + rng + '  vs  ' + brng + ' (WoW)';
+                var cmp = single ? '(same weekday last week)' : '(previous ' + nDays + ' days)';
+                if (badge) badge.textContent = '📅 ' + rng + '  vs  ' + brng + '  ' + cmp;
                 [['skuTitle1', '▲ Top 20 GMV Gainers'], ['skuTitle2', '▲ Top 20 QTY Gainers'],
                  ['skuTitle3', '▲ Top 20 by Customers Gainers'], ['skuTitle4', '▼ Top 20 QTY Losers'],
                  ['skuTitle5', '▼ Top 20 by Customers Losers']].forEach(function (t) {
                     var el = document.getElementById(t[0]);
-                    if (el) el.textContent = t[1] + ' — ' + rng + ' vs ' + brng;
+                    if (el) el.textContent = t[1] + ' — ' + rng + ' vs ' + brng + ' ' + cmp;
                 });
                 function put(id, list, mi) {
                     var el = document.getElementById(id);
