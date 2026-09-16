@@ -449,6 +449,7 @@ js_code = """function fmtDateNC(yyyymmdd) {
         function renderSkuMovers(dateList) {
             const _endDate = (dateList && dateList.length) ? dateList.slice().sort().slice(-1)[0] : SKU_LATEST_DATE;
             const _movers = SKU_MOVERS[_endDate] || SKU_MOVERS[SKU_LATEST_DATE];
+            if (!_movers) { document.getElementById('skuDateBadge').textContent = '📅 SKU 數據未載入'; return; }   // payload missing — degrade, never throw
             const _shown = SKU_MOVERS[_endDate] ? _endDate : SKU_LATEST_DATE;
             document.getElementById('skuDateBadge').textContent = '📅 ' + _shown + ' vs same weekday last week';
             const fmt = n => (n >= 0 ? '+' : '') + Math.round(n).toLocaleString('en-US');
@@ -488,7 +489,7 @@ part_js = """    <script>
         const NC_ONLINE = %s;
         const NC_POS = %s;
         const NC_DS = %s;
-        const SKU_MOVERS = window.SKU_MOVERS_DAILY;
+        const SKU_MOVERS = window.SKU_MOVERS_DAILY || {};   // payload may fail to load
         const SKU_LATEST_DATE = '%s';
         const LAST7 = Object.keys(NC_TOTAL).sort().slice(-7);
         const LATEST = Object.keys(NC_TOTAL).sort().slice(-1)[0];
