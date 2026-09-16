@@ -169,9 +169,9 @@ part_html = """
         </div>
     </div>
 
-    <!-- ===== Part 5: Product-Level SKU Movers (LITE) ===== -->
+    <!-- ===== Part 5: Online Product-Level SKU Movers (LITE) ===== -->
     <div class="sku-section">
-        <div class="part-banner"><span class="part-num">Part 5</span><span class="part-title">Product-Level SKU Movers (LITE)</span><span class="part-badge" id="skuDateBadge">—</span></div>
+        <div class="part-banner"><span class="part-num">Part 5</span><span class="part-title">Online Product-Level SKU Movers (LITE)</span><span class="part-badge" id="skuDateBadge">—</span></div>
         <div class="nc-legend" style="margin-bottom:14px;">% WoW = GMV change vs same weekday last week, relative to last week's GMV. ⚠ = single-unit sale (high-ticket, low volume — e.g. one aircon/phone).</div>
         <div class="sku-grid">
             <div class="sku-table-wrap">

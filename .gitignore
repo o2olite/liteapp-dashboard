@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+# Raw data snapshots — large and regenerated locally; the page only needs data/sku_p5/*.js
+data/*.json
+data/*.jsonl
+# Retired 2026-09-16 in favour of the per-day store (data/sku_p5/)
+data/sku_movers_daily.js
+index.html.bak-*

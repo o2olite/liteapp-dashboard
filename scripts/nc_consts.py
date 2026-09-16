@@ -12,19 +12,35 @@ the whole page build.
 """
 import argparse
 import json
+import os
 import re
 import sys
 
 REPO = '/home/chanlm/.hermes/liteapp-dashboard'
 NC = f'{REPO}/data/new_customers_lite_2023_2026.json'
-SKU = f'{REPO}/data/sku_movers_daily_2026.json'
+SKU = f'{REPO}/data/sku_movers_daily_2026.json'          # legacy top-20 payload (retired)
+SKU_P5 = f'{REPO}/data/sku_p5'                          # per-day, per-SKU store (current)
+
+
+def _sku_latest():
+    """Newest day in the per-day store (falls back to the legacy payload)."""
+    try:
+        months = sorted(f[:-3] for f in os.listdir(SKU_P5) if f.startswith('sku-') and f.endswith('.js'))
+        if months:
+            txt = open(f'{SKU_P5}/sku-{months[-1]}.js', encoding='utf-8').read()
+            days = re.findall(r'"(\d{4}-\d{2}-\d{2})":\[', txt)
+            if days:
+                return max(days)
+    except OSError:
+        pass
+    return sorted(json.load(open(SKU, encoding='utf-8'))['days'])[-1]
 
 
 def consts(nc=None, sku_latest=None):
     """{const_name: js_literal} — keys unquoted, matching the existing page."""
     nc = nc or json.load(open(NC, encoding='utf-8'))
     if sku_latest is None:
-        sku_latest = sorted(json.load(open(SKU, encoding='utf-8'))['days'])[-1]
+        sku_latest = _sku_latest()
 
     c3 = lambda m: '{' + ','.join(f'"{d}":{{c:{e["c"]},o:{e["o"]},g:{e["g"]}}}'
                                   for d, e in sorted(m.items())) + '}'
