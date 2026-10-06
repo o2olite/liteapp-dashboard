@@ -1870,10 +1870,19 @@ function fmtDateNC(yyyymmdd) {
             }, [0, 0, 0, 0]);
         }
 
+        function p5LatestDate() {
+            var latest = '';
+            Object.keys(window.SKU_P5 || {}).forEach(function (m) {
+                var mo = window.SKU_P5[m]; if (!mo || !mo.d) return;
+                Object.keys(mo.d).forEach(function (d) { if (d > latest) latest = d; });
+            });
+            return latest;
+        }
         async function renderSkuMovers(dateList) {
             var badge = document.getElementById('skuDateBadge');
             var dates = (dateList && dateList.length) ? dateList.slice().sort()
-                : (typeof SKU_LATEST_DATE !== 'undefined' && SKU_LATEST_DATE ? [SKU_LATEST_DATE] : []);
+                : (typeof SKU_LATEST_DATE !== 'undefined' && SKU_LATEST_DATE ? [SKU_LATEST_DATE]
+                    : [p5LatestDate()].filter(Boolean));
             if (!dates.length) { if (badge) badge.textContent = '📅 SKU 數據未載入'; return; }
             var from = dates[0], to = dates[dates.length - 1];
             var nDays = Math.round((Date.parse(to) - Date.parse(from)) / 864e5) + 1;
