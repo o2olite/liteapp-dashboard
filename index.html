@@ -1728,42 +1728,6 @@ function fmtDateNC(yyyymmdd) {
             renderNcChart(dates);
             renderNcTable(dates);
         }
-
-        function renderSkuMovers(dateList) {
-            const _endDate = (dateList && dateList.length) ? dateList.slice().sort().slice(-1)[0] : SKU_LATEST_DATE;
-            const _movers = SKU_MOVERS[_endDate] || SKU_MOVERS[SKU_LATEST_DATE];
-            if (!_movers) { document.getElementById('skuDateBadge').textContent = '📅 SKU 數據未載入'; return; }   // payload missing — degrade, never throw
-            const _shown = SKU_MOVERS[_endDate] ? _endDate : SKU_LATEST_DATE;
-            document.getElementById('skuDateBadge').textContent = '📅 ' + _shown + ' vs same weekday last week';
-            const fmt = n => (n >= 0 ? '+' : '') + Math.round(n).toLocaleString('en-US');
-            const link = sku => '<a class="sku-link" href="http://hktvmall.com/p/' + sku + '" target="_blank" rel="noopener">' + sku + '</a>';
-            function pctCell(m) {
-                if (m[8] === null || m[8] === undefined) return '<td class="nc-neutral">n/a</td>';
-                var cls = m[8] >= 0 ? 'nc-pos' : 'nc-neg';
-                return '<td class="' + cls + '">' + (m[8] >= 0 ? '+' : '') + m[8] + '%</td>';
-            }
-            function warnQty(m, idx) { return (m[idx] < 2) ? ' <span class="sku-warn" title="single-unit sale">⚠</span>' : ''; }
-            function gmvRow(m, i) {
-                return '<tr><td>' + (i+1) + '</td><td class="lb">' + m[1] + warnQty(m, 6) + '</td><td class="l sku-name">' + m[2] + '</td><td class="l sku-id">' + link(m[0]) + '</td><td class="nc-pos">' + fmt(m[3]) + '</td>' + pctCell(m) + '<td>' + Math.round(m[4]).toLocaleString('en-US') + '</td><td>' + fmt(m[5]) + '</td><td>' + fmt(m[7]) + '</td></tr>';
-            }
-            function qtyRow(m, i) {
-                return '<tr><td>' + (i+1) + '</td><td class="lb">' + m[1] + '</td><td class="l sku-name">' + m[2] + '</td><td class="l sku-id">' + link(m[0]) + '</td><td class="nc-pos">' + fmt(m[5]) + '</td><td>' + Math.round(m[6]).toLocaleString('en-US') + '</td><td>' + fmt(m[3]) + '</td><td>' + fmt(m[7]) + '</td></tr>';
-            }
-            function custRow(m, i) {
-                return '<tr><td>' + (i+1) + '</td><td class="lb">' + m[1] + '</td><td class="l sku-name">' + m[2] + '</td><td class="l sku-id">' + link(m[0]) + '</td><td class="nc-pos">' + fmt(m[7]) + '</td><td>' + fmt(m[3]) + '</td><td>' + fmt(m[5]) + '</td></tr>';
-            }
-            function qtyLosersRow(m, i) {
-                return '<tr><td>' + (i+1) + '</td><td class="lb">' + m[1] + '</td><td class="l sku-name">' + m[2] + '</td><td class="l sku-id">' + link(m[0]) + '</td><td class="nc-neg">' + fmt(m[5]) + '</td><td>' + Math.round(m[6]).toLocaleString('en-US') + '</td><td>' + fmt(m[3]) + '</td><td>' + fmt(m[7]) + '</td></tr>';
-            }
-            function custLosersRow(m, i) {
-                return '<tr><td>' + (i+1) + '</td><td class="lb">' + m[1] + '</td><td class="l sku-name">' + m[2] + '</td><td class="l sku-id">' + link(m[0]) + '</td><td class="nc-neg">' + fmt(m[7]) + '</td><td>' + fmt(m[3]) + '</td><td>' + fmt(m[5]) + '</td></tr>';
-            }
-            document.getElementById('skuGainersBody').innerHTML = (_movers.g || []).map(gmvRow).join('');
-            document.getElementById('skuQtyBody').innerHTML = (_movers.q || []).map(qtyRow).join('');
-            document.getElementById('skuCustGainersBody').innerHTML = (_movers.c || []).map(custRow).join('');
-            document.getElementById('skuQtyLosersBody').innerHTML = (_movers.ql || []).map(qtyLosersRow).join('');
-            document.getElementById('skuCustLosersBody').innerHTML = (_movers.cl || []).map(custLosersRow).join('');
-        }
         // ===== Part 5: range-aware (2026-09-16) =====
         // Data: one file per month, data/sku_p5/sku-YYYY-MM.js ->
         //   SKU_P5['YYYY-MM'] = { s:[[sku,brand,name],...], d:{ 'YYYY-MM-DD':[[idx,gmv,qty,cust,ord],...] } }
