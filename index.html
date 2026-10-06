@@ -157,6 +157,51 @@
         .part-title { font-size: 15px; font-weight: 700; color: #fff; }
         .part-desc { font-size: 12px; font-weight: 400; color: #94a3b8; }
         .part-badge { margin-left: auto; background: rgba(255,255,255,0.15); padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+
+        /* ===== Sticky Anchor Nav ===== */
+        .anchor-nav {
+            position: sticky;
+            top: 0;
+            z-index: 200;
+            background: #fff;
+            padding: 10px 16px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .anchor-nav a {
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            background: #f1f5f9;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .anchor-nav a:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+        .anchor-nav a.active {
+            background: #3949ab;
+            color: #fff;
+        }
+        .anchor-nav .nav-label {
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+        @media (max-width: 900px) {
+            .anchor-nav a { font-size: 12px; padding: 6px 10px; }
+        }
+
         /* ===== Part 3: New Customers ===== */
         .nc-section { margin: 28px 0; }
         .nc-header { background: linear-gradient(135deg, #1a237e 0%, #3949ab 100%); color: #fff; border-radius: 12px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -336,8 +381,18 @@
         </div>
     </div>
 
+    <!-- ===== STICKY ANCHOR NAV ===== -->
+    <nav class="anchor-nav" id="anchorNav">
+        <span class="nav-label">📌 Jump to:</span>
+        <a href="#part1" class="active">Part 1 — Achievement</a>
+        <a href="#part2">Part 2 — Overall</a>
+        <a href="#part3">Part 3 — New Customers</a>
+        <a href="#part4">Part 4 — Category Sales</a>
+        <a href="#part5">Part 5 — SKU Movers</a>
+    </nav>
+
     <div class="kpi-section">
-        <div class="part-banner"><span class="part-num">Part 1</span><span class="part-title">Achievement Rate This Month</span><span class="part-desc">Monthly target progress</span></div><h2 id="achievementTitle">🎯 Current Month - Achievement (July 2026)</h2>
+        <div class="part-banner" id="part1"><span class="part-num">Part 1</span><span class="part-title">Achievement Rate This Month</span><span class="part-desc">Monthly target progress</span></div><h2 id="achievementTitle">🎯 Current Month - Achievement (July 2026)</h2>
         <div class="kpi-cards">
             <div class="kpi-card" style="border-top-color: #e91e63;">
                 <h3>GMV Target</h3>
@@ -366,7 +421,7 @@
     </div>
 
     <div class="kpi-section">
-        <div class="part-banner"><span class="part-num">Part 2</span><span class="part-title">Overall Performance</span><span class="part-desc">Overall + Online + POS + Daily GMV + Weekday + Sales table + Traffic</span></div><h2>📊 Overall Performance (<span id="filteredDateRange">All Time</span>)</h2>
+        <div class="part-banner" id="part2"><span class="part-num">Part 2</span><span class="part-title">Overall Performance</span><span class="part-desc">Overall + Online + POS + Daily GMV + Weekday + Sales table + Traffic</span></div><h2>📊 Overall Performance (<span id="filteredDateRange">All Time</span>)</h2>
         <div class="kpi-cards">
             <div class="kpi-card">
                 <h3>Total GMV</h3>
@@ -519,7 +574,7 @@
     
     <!-- ===== Part 3: New Customers Performance ===== -->
     <div class="nc-section">
-        <div class="part-banner"><span class="part-num">Part 3</span><span class="part-title">New Customers Performance</span><span class="part-badge" id="ncDateBadge">—</span></div>
+        <div class="part-banner" id="part3"><span class="part-num">Part 3</span><span class="part-title">New Customers Performance</span><span class="part-badge" id="ncDateBadge">—</span></div>
         <div class="nc-kpis">
             <div class="nc-kpi" style="border-top-color:#3949ab;"><h3>Total New Customers (Unique)</h3><div class="period" id="ncTotalPeriod">—</div><div class="value" id="ncTotal">N/A</div><div class="change" id="ncTotalCh">—</div></div>
             <div class="nc-kpi" style="border-top-color:#4caf50;"><h3>Online New Customers</h3><div class="period" id="ncOnlinePeriod">—</div><div class="value" id="ncOnline">N/A</div><div class="change" id="ncOnlineCh">—</div></div>
@@ -550,7 +605,7 @@
     </div>
 
 
-    <div class="part-banner"><span class="part-num">Part 4</span><span class="part-title">Daily Online Sales by Category</span><span class="part-desc">GMV + Customers by Category</span></div>
+    <div class="part-banner" id="part4"><span class="part-num">Part 4</span><span class="part-title">Daily Online Sales by Category</span><span class="part-desc">GMV + Customers by Category</span></div>
     <div class="cat-section">
         <h2 class="cat-section-title">📊 Daily Online GMV &amp; Customers by Category (<span id="catDateRange">default</span>)</h2>
 
@@ -591,7 +646,7 @@
     </div>
     <!-- ===== Part 5: Online Product-Level SKU Movers (LITE) ===== -->
     <div class="sku-section">
-        <div class="part-banner"><span class="part-num">Part 5</span><span class="part-title">Online Product-Level SKU Movers (LITE)</span><span class="part-badge" id="skuDateBadge">—</span></div>
+        <div class="part-banner" id="part5"><span class="part-num">Part 5</span><span class="part-title">Online Product-Level SKU Movers (LITE)</span><span class="part-badge" id="skuDateBadge">—</span></div>
         <div class="nc-legend" style="margin-bottom:14px;">Every table shows the table's own metric first (absolute + Δ + %), then the other three <strong>absolute</strong> amounts — all for the selected date range. Δ and % compare the range against the <strong>same number of days immediately before it</strong> (a single day compares against the same weekday last week). <em>new</em> = no sales in the comparison window. ⚠ mark = single-unit sale (high-ticket, low volume).</div>
         <div class="sku-avail" id="skuP5Summary">—</div>
         <div class="sku-grid">
@@ -1898,6 +1953,31 @@ function fmtDateNC(yyyymmdd) {
         window.renderSkuMovers = renderSkuMovers;
         renderNewCustomers();
         renderSkuMovers();
+
+        // ===== Sticky Anchor Nav: scroll spy =====
+        (function() {
+            var sections = ['part1','part2','part3','part4','part5'];
+            var navLinks = document.querySelectorAll('.anchor-nav a');
+            if (!navLinks.length) return;
+            window.addEventListener('scroll', function() {
+                var scrollPos = window.scrollY + 150;
+                sections.forEach(function(id, i) {
+                    var el = document.getElementById(id);
+                    if (el && el.offsetTop <= scrollPos && (el.offsetTop + el.offsetHeight) > scrollPos) {
+                        navLinks.forEach(function(l) { l.classList.remove('active'); });
+                        if (navLinks[i]) navLinks[i].classList.add('active');
+                    }
+                });
+            });
+            // Smooth scroll on click
+            navLinks.forEach(function(a) {
+                a.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var target = document.querySelector(this.getAttribute('href'));
+                    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
+        })();
     })();
     </script>
 
