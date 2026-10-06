@@ -1862,7 +1862,7 @@ function fmtDateNC(yyyymmdd) {
             var bFrom = single ? bTo : p5Shift(bTo, -(nDays - 1));
             if (badge) badge.textContent = '⏳ ' + from + ' → ' + to + ' …';
             try {
-                await p5Ensure(bFrom, bTo);
+                await Promise.all([p5Ensure(from, to), p5Ensure(bFrom, bTo)]);
                 var cur = p5Sum(from, to), base = p5Sum(bFrom, bTo);
                 var T = p5Tables(cur, base);
                 var rng = (from === to) ? from : (from + ' – ' + to + ' (' + nDays + ' days)');
